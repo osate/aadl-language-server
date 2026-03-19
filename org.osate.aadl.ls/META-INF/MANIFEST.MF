@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AADL Language Server
+Bundle-SymbolicName: org.osate.aadl.ls
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: CMU-SEI
+Automatic-Module-Name: org.osate.aadl.ls
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Require-Bundle: org.eclipse.xtext.ide,
+ org.osate.aadl.ls.core;bundle-version="1.0.0",
+ org.eclipse.lsp4j;bundle-version="0.24.0",
+ org.eclipse.lsp4j.jsonrpc;bundle-version="0.24.0",
+ org.aopalliance;bundle-version="1.0.0"

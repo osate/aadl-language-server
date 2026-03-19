@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.osate</groupId>
+		<artifactId>osate2.main-pom</artifactId>
+		<version>2.18.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>org.osate</groupId>
+	<artifactId>aadl.ls.parent</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<repositories>
+		<repository>
+			<id>osate</id>
+			<url>http://osate-build.sei.cmu.edu/download/osate/testing/updates</url>
+			<layout>p2</layout>
+		</repository>
+		<repository>
+			<id>eclipse</id>
+			<url>${eclipse.repo.url}</url>
+			<layout>p2</layout>
+		</repository>
+	</repositories>
+
+	<modules>
+		<module>org.osate.aadl.ls</module>
+		<module>plugins/org.osate.aadl.ls.core</module>
+		<module>releng/org.osate.aadl.ls.repository</module>
+	</modules>
+
+</project>
+
