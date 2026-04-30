@@ -2,7 +2,7 @@ package org.osate.aadl.ls;
 
 import org.eclipse.emf.ecore.plugin.EcorePlugin;
 import org.eclipse.xtext.ide.server.ServerLauncher;
-import org.eclipse.xtext.ide.server.ServerModule;
+import org.osate.aadl.ls.core.AadlServerModule;
 
 public class RunAadl2Server {
 
@@ -10,7 +10,7 @@ public class RunAadl2Server {
 		// Read the meta information about the plug-ins to get the annex information
 		EcorePlugin.ExtensionProcessor.process(null);
 
-		ServerLauncher.launch(RunAadl2Server.class.getName(), args, new ServerModule());
+		ServerLauncher.launch(RunAadl2Server.class.getName(), args, new AadlServerModule());
 	}
 
 }
