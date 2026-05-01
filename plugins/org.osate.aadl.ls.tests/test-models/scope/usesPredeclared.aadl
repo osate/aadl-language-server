@@ -1,0 +1,7 @@
+package UsesPredeclared
+public
+	thread t
+		properties
+			Period => 10 ms;
+	end t;
+end UsesPredeclared;

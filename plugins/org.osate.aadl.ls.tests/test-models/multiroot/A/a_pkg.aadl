@@ -1,0 +1,5 @@
+package A_Pkg
+public
+	system AType
+	end AType;
+end A_Pkg;

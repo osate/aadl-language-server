@@ -32,6 +32,7 @@
 	<modules>
 		<module>org.osate.aadl.ls</module>
 		<module>plugins/org.osate.aadl.ls.core</module>
+		<module>plugins/org.osate.aadl.ls.tests</module>
 		<module>releng/org.osate.aadl.ls.repository</module>
 	</modules>
 

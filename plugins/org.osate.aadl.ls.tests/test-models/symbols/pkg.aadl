@@ -1,0 +1,8 @@
+package symbols_pkg
+public
+	system sys
+	end sys;
+
+	system implementation sys.impl
+	end sys.impl;
+end symbols_pkg;

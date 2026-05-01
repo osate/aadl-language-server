@@ -1,0 +1,5 @@
+package broken
+public
+	system Foo extends NonExistent
+	end Foo;
+end broken;

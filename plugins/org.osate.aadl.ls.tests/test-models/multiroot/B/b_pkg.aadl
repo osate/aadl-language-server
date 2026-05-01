@@ -1,0 +1,7 @@
+package B_Pkg
+public
+	with A_Pkg;
+
+	system BType extends A_Pkg::AType
+	end BType;
+end B_Pkg;

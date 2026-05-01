@@ -1,0 +1,15 @@
+package errors
+public
+
+	abstract A
+		features
+			f: feature;
+		annex emv2 {**
+			use types ErrorLibrary;
+			error propagations
+				f: in propagation {ValueError};
+			end propagations;
+		**};
+	end A;
+
+end errors;
