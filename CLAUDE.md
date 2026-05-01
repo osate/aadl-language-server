@@ -13,19 +13,24 @@ This is the AADL Language Server based on OSATE 2.19.0, implementing the Languag
 The project follows Eclipse plugin architecture with Maven/Tycho build:
 
 - **org.osate.aadl.ls/** - Main launcher bundle with entry points
+  - Source root: `src/org/osate/aadl/ls/`
   - `Aadl2ServerLauncher.java` - Socket-based server launcher (for testing)
   - `RunAadl2Server.java` - Standard stdio-based launcher (production)
 
 - **plugins/org.osate.aadl.ls.core/** - Core language server implementation
-  - `AadlLanguageServerPlugin.java` - Plugin activator and server initialization
-  - `AadlServer.java` - Eclipse application entry point
-  - `AadlServerModule.java` - Custom ServerModule with multi-root workspace support
-  - `Aadl2LsSetup.java` - Xtext language setup with Guice dependency injection
-  - `Aadl2LsRuntimeModule.java` - Runtime bindings (e.g., global scope provider)
-  - `Aadl2LsIdeModule.java` - IDE service bindings (commands, symbol mapper)
-  - `Aadl2LsGlobalScopeProvider.java` - Custom scope provider for language server mode
-  - `CommandService.java` - Custom LSP commands (instantiate, analyze latency)
-  - `ErrorModelLsSetup.java` and `ErrorModelLsRuntimeModule.java` - Error Model annex support
+  - Source root: `src/org/osate/aadl/ls/core/`
+  - `AadlServerModule.java` (package `...core`) - Custom ServerModule with multi-root workspace support; kept out of `internal` because it is the bound server module
+  - Everything below lives in the `...core.internal` subpackage:
+    - `AadlLanguageServerPlugin.java` - Plugin activator and server initialization
+    - `AadlServer.java` - Eclipse application entry point
+    - `Aadl2LsSetup.java` - Xtext language setup with Guice dependency injection
+    - `Aadl2LsRuntimeModule.java` - Runtime bindings (e.g., global scope provider)
+    - `Aadl2LsIdeModule.java` - IDE service bindings (commands, symbol mapper)
+    - `Aadl2LsGlobalScopeProvider.java` - Custom scope provider for language server mode
+    - `Aadl2LsProjectDescriptionFactory.java` - Reads project dependencies from `.project` XML files so cross-project references work without an Eclipse workspace
+    - `CommandService.java` - Custom LSP commands (instantiate, analyze latency)
+    - `AadlSymbolNameProvider.java` - Document symbol naming (non-qualified names)
+    - `ErrorModelLsSetup.java` and `ErrorModelLsRuntimeModule.java` - Error Model annex support
 
 - **releng/org.osate.aadl.ls.repository/** - Eclipse p2 repository packaging
 - **releng/aadl.ls.releng/** - Build configuration and launch files
