@@ -33,7 +33,6 @@ censes only apply to the Third Party Software and not any other portion of this 
       <category name="osate2"/>
    </feature>
    <bundle id="org.osate.aadl.ls"/>
-   <bundle id="org.osate.aadl.ls.core"/>
    <category-def name="osate2" label="OSATE2 for AADL2">
       <description>
          OSATE

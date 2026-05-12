@@ -1,4 +1,4 @@
-package org.osate.aadl.ls.core.internal;
+package org.osate.aadl.ls.internal;
 
 import org.osate.aadl2.modelsupport.scoping.IEClassGlobalScopeProvider;
 import org.osate.xtext.aadl2.Aadl2RuntimeModule;

@@ -4,7 +4,7 @@ import org.eclipse.xtext.testing.GlobalRegistries;
 import org.eclipse.xtext.testing.GlobalRegistries.GlobalStateMemento;
 import org.eclipse.xtext.testing.IInjectorProvider;
 import org.eclipse.xtext.testing.IRegistryConfigurator;
-import org.osate.aadl.ls.core.internal.ErrorModelLsSetup;
+import org.osate.aadl.ls.internal.ErrorModelLsSetup;
 
 import com.google.inject.Injector;
 

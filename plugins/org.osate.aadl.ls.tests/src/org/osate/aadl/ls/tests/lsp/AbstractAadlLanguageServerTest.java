@@ -5,7 +5,7 @@ import org.eclipse.xtext.ide.server.concurrent.IRequestManager;
 import org.eclipse.xtext.testing.AbstractLanguageServerTest;
 import org.eclipse.xtext.util.Modules2;
 import org.junit.BeforeClass;
-import org.osate.aadl.ls.core.AadlServerModule;
+import org.osate.aadl.ls.AadlServerModule;
 
 public abstract class AbstractAadlLanguageServerTest extends AbstractLanguageServerTest {
 

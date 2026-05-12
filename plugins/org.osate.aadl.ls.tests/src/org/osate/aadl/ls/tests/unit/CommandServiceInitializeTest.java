@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 
 import org.junit.Test;
-import org.osate.aadl.ls.core.internal.CommandService;
+import org.osate.aadl.ls.internal.CommandService;
 
 public class CommandServiceInitializeTest {
 

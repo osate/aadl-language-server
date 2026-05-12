@@ -9,7 +9,7 @@
             thread="main"
             visible="true">
          <run
-               class="org.osate.aadl.ls.core.internal.AadlServer">
+               class="org.osate.aadl.ls.internal.AadlServer">
          </run>
       </application>
    </extension>

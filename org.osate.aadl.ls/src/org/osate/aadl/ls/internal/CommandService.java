@@ -1,4 +1,4 @@
-package org.osate.aadl.ls.core.internal;
+package org.osate.aadl.ls.internal;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;

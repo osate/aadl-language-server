@@ -1,9 +1,9 @@
 package org.osate.aadl.ls.tests;
 
 import org.eclipse.xtext.util.Modules2;
-import org.osate.aadl.ls.core.internal.Aadl2LsIdeModule;
-import org.osate.aadl.ls.core.internal.Aadl2LsRuntimeModule;
-import org.osate.aadl.ls.core.internal.Aadl2LsSetup;
+import org.osate.aadl.ls.internal.Aadl2LsIdeModule;
+import org.osate.aadl.ls.internal.Aadl2LsRuntimeModule;
+import org.osate.aadl.ls.internal.Aadl2LsSetup;
 import org.osate.testsupport.Aadl2InjectorProvider;
 import org.osate.xtext.aadl2.Aadl2RuntimeModule;
 

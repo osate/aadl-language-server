@@ -1,4 +1,4 @@
-package org.osate.aadl.ls.core.internal;
+package org.osate.aadl.ls.internal;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -2,7 +2,7 @@ package org.osate.aadl.ls;
 
 import org.eclipse.emf.ecore.plugin.EcorePlugin;
 import org.eclipse.xtext.ide.server.SocketServerLauncher;
-import org.osate.aadl.ls.core.AadlServerModule;
+import org.osate.aadl.ls.AadlServerModule;
 
 import com.google.inject.Module;
 

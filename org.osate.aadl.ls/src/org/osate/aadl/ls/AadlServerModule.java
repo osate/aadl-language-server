@@ -21,7 +21,7 @@
  * aries to this license with respect to the terms applicable to their Third Party Software. Third Party Software li-
  * censes only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  */
-package org.osate.aadl.ls.core;
+package org.osate.aadl.ls;
 
 import java.util.concurrent.ExecutorService;
 
@@ -38,7 +38,7 @@ import org.eclipse.xtext.resource.IContainer;
 import org.eclipse.xtext.resource.IResourceServiceProvider;
 import org.eclipse.xtext.resource.ResourceServiceProviderServiceLoader;
 import org.eclipse.xtext.resource.containers.ProjectDescriptionBasedContainerManager;
-import org.osate.aadl.ls.core.internal.Aadl2LsProjectDescriptionFactory;
+import org.osate.aadl.ls.internal.Aadl2LsProjectDescriptionFactory;
 
 /**
  * Custom server module that configures multi-root workspace support for the AADL language server.
