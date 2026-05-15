@@ -1,0 +1,63 @@
+package org.osate.aadl.ls.internal;
+
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.xtext.documentation.IEObjectDocumentationProvider;
+import org.eclipse.xtext.ide.labels.INameLabelProvider;
+import org.eclipse.xtext.ide.server.hover.HoverService;
+
+import com.google.inject.Inject;
+
+public class AadlHoverService extends HoverService {
+	@Inject
+	private IEObjectDocumentationProvider eObjectDocumentationProvider;
+
+	@SuppressWarnings("restriction")
+	@Inject
+	private INameLabelProvider nameLabelProvider;
+
+	@Override
+	public String getContents(EObject element) {
+		String documentation = eObjectDocumentationProvider.getDocumentation(element);
+		if (documentation == null) {
+			return getFirstLine(element);
+		} else {
+			return getFirstLine(element) + "  \n" + htmlToMarkdown(documentation);
+		}
+	}
+
+	private String getFirstLine(EObject o) {
+		@SuppressWarnings("restriction")
+		String label = nameLabelProvider.getNameLabel(o);
+		return o.eClass().getName() + (label != null ? " **" + label + "**" : "");
+	}
+
+	private String htmlToMarkdown(String html) {
+		if (html == null) {
+			return "";
+		}
+
+		String markdown = html;
+
+		// Remove existing newlines
+		markdown = markdown.replaceAll("\\n", "");
+
+		// Bold: <b> or <strong> -> **text**
+		markdown = markdown.replaceAll("(?i)<(b|strong)>(.*?)</\\1>", "**$2**");
+
+		// Italics: <i> or <em> -> *text*
+		markdown = markdown.replaceAll("(?i)<(i|em)>(.*?)</\\1>", "*$2*");
+
+		// Headings: <h1> -> # text, <h2> -> ## text
+		markdown = markdown.replaceAll("(?i)<h1>(.*?)</h1>", "# $1\n\n");
+		markdown = markdown.replaceAll("(?i)<h2>(.*?)</h2>", "## $1\n\n");
+
+		// Paragraphs & Line Breaks
+		markdown = markdown.replaceAll("(?i)<p>(.*?)</p>", "\n\n$1\n\n");
+		markdown = markdown.replaceAll("(?i)<(br|p)\\s*/?>", "\n\n");
+
+		// 6. Strip all remaining HTML tags
+		markdown = markdown.replaceAll("<[^>]+>", "");
+
+		return markdown.trim();
+	}
+}
