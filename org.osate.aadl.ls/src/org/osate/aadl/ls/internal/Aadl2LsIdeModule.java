@@ -23,6 +23,7 @@
  */
 package org.osate.aadl.ls.internal;
 
+import org.eclipse.xtext.ide.server.ILanguageServerExtension;
 import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
 import org.eclipse.xtext.ide.server.hover.HoverService;
 import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
@@ -43,6 +44,10 @@ public class Aadl2LsIdeModule extends AbstractAadl2IdeModule {
 
 	public Class<? extends HoverService> bindHoverService() {
 		return AadlHoverService.class;
+	}
+
+	public Class<? extends ILanguageServerExtension> bindILanguageServerExtension() {
+		return WaitUntilFinishedExtension.class;
 	}
 
 }
