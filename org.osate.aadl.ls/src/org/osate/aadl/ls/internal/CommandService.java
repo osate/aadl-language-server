@@ -1,6 +1,7 @@
 package org.osate.aadl.ls.internal;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -76,7 +77,7 @@ public class CommandService implements IExecutableCommandService {
 									var io = (InstanceObject)e;
 									result.append(io.getComponentInstancePath());
 									result.append(": ");
-									result.append(d.kind);
+									result.append(d.kind.toLowerCase(Locale.ROOT));
 									result.append(": ");
 									result.append(d.message);
 									result.append('\n');
