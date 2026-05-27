@@ -1,5 +1,7 @@
 package org.osate.aadl.ls.internal;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -23,6 +25,8 @@ import org.osate.aadl2.instantiation.InstantiateModel;
 import org.osate.aadl2.modelsupport.errorreporting.AnalysisErrorReporterManager;
 import org.osate.aadl2.modelsupport.errorreporting.QueuingAnalysisErrorReporter;
 import org.osate.analysis.flows.FlowLatencyAnalysisSwitch;
+import org.osate.result.AnalysisResult;
+import org.osate.result.Result;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -117,6 +121,13 @@ public class CommandService implements IExecutableCommandService {
 			var arg1 = (JsonPrimitive) Iterables.getFirst(params.getArguments(), null);
 			String iuri = arg1.getAsString();
 			if (iuri != null) {
+				var args = params.getArguments();
+				boolean asynchronousSystem = optBool(args, 1, true);
+				boolean majorFrameDelay = optBool(args, 2, true);
+				boolean worstCaseDeadline = optBool(args, 3, true);
+				boolean bestCaseEmptyQueue = optBool(args, 4, true);
+				boolean disableQueuingLatency = optBool(args, 5, false);
+
 				var uri = URI.createURI(iuri);
 				Resource res = new ResourceSetImpl().getResource(uri, true);
 				SystemInstance instance = (SystemInstance) res.getContents().get(0);
@@ -126,12 +137,30 @@ public class CommandService implements IExecutableCommandService {
 						var resource = (new ResourceSetImpl()).getResource(uri, true);
 						EList<EObject> rl = resource.getContents();
 
+						var output = new StringBuilder();
+						output.append("Ran latency analysis of ").append(iuri).append('\n');
 						if (!rl.isEmpty() && rl.get(0) instanceof Element) {
 							var inst = (SystemInstance) rl.get(0);
 							var checker = new FlowLatencyAnalysisSwitch(inst);
-							checker.invokeAndSaveResult(inst, null, true, true, true, true, false);
+							AnalysisResult ar = checker.invokeAndSaveResult(inst, null, asynchronousSystem,
+									majorFrameDelay, worstCaseDeadline, bestCaseEmptyQueue, disableQueuingLatency);
+
+							var resultURI = ar.eResource().getURI();
+							var csvURI = resultURI.trimFileExtension().appendFileExtension("csv");
+							output.append(resultURI.toFileString().replaceAll("^/+", "/")).append('\n');
+							output.append(csvURI.toFileString().replaceAll("^/+", "/")).append('\n');
+
+							var instancePath = inst.eResource().getURI().toFileString().replaceAll("^/+", "/");
+							var diagLines = new ArrayList<String>();
+							for (Result r : ar.getResults()) {
+								collectDiagnostics(r, instancePath, diagLines);
+							}
+							Collections.sort(diagLines);
+							for (var line : diagLines) {
+								output.append(line).append('\n');
+							}
 						}
-						return "Ran latency analysis of " + iuri;
+						return output.toString();
 					}).get();
 				} catch (InterruptedException | ExecutionException e) {
 					return e.getMessage();
@@ -141,6 +170,38 @@ public class CommandService implements IExecutableCommandService {
 			}
 		}
 		return "Bad Command";
+	}
+
+	private static boolean optBool(List<Object> args, int index, boolean defaultValue) {
+		if (args == null || index >= args.size()) {
+			return defaultValue;
+		}
+		var arg = args.get(index);
+		if (arg instanceof JsonPrimitive p && p.isBoolean()) {
+			return p.getAsBoolean();
+		}
+		return defaultValue;
+	}
+
+	private static void collectDiagnostics(Result r, String instancePath, List<String> lines) {
+		String elementPath = "<unknown>";
+		var modelElement = r.getModelElement();
+		if (modelElement instanceof InstanceObject io) {
+			elementPath = io.getComponentInstancePath();
+		}
+		for (var d : r.getDiagnostics()) {
+			var path = elementPath;
+			var diagElement = d.getModelElement();
+			if (diagElement instanceof InstanceObject io) {
+				path = io.getComponentInstancePath();
+			}
+			lines.add(instancePath + ":" + path + ": "
+					+ d.getDiagnosticType().getName().toLowerCase(Locale.ROOT)
+					+ ": " + d.getMessage());
+		}
+		for (var sub : r.getSubResults()) {
+			collectDiagnostics(sub, instancePath, lines);
+		}
 	}
 
 }
