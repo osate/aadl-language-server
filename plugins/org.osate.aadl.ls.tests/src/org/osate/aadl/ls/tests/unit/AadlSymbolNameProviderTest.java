@@ -7,7 +7,7 @@ import org.eclipse.xtext.testing.XtextRunner;
 import org.eclipse.xtext.testing.util.ParseHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.osate.aadl.ls.internal.AadlSymbolNameProvider;
+import org.osate.aadl.ls.services.AadlSymbolNameProvider;
 import org.osate.aadl.ls.tests.AadlLsInjectorProvider;
 import org.osate.aadl2.AadlPackage;
 import org.osate.aadl2.Classifier;

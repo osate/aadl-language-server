@@ -1,4 +1,4 @@
-package org.osate.aadl.ls.internal;
+package org.osate.aadl.ls.services;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.documentation.IEObjectDocumentationProvider;

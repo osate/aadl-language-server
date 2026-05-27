@@ -12,26 +12,28 @@ This is the AADL Language Server based on OSATE 2.19.0, implementing the Languag
 
 The project follows Eclipse plugin architecture with Maven/Tycho build:
 
-- **org.osate.aadl.ls/** - Main launcher bundle with entry points
-  - Source root: `src/org/osate/aadl/ls/`
-  - `Aadl2ServerLauncher.java` - Socket-based server launcher (for testing)
-  - `RunAadl2Server.java` - Standard stdio-based launcher (production)
-
-- **plugins/org.osate.aadl.ls.core/** - Core language server implementation
-  - Source root: `src/org/osate/aadl/ls/core/`
-  - `AadlServerModule.java` (package `...core`) - Custom ServerModule with multi-root workspace support; kept out of `internal` because it is the bound server module
-  - Everything below lives in the `...core.internal` subpackage:
-    - `AadlLanguageServerPlugin.java` - Plugin activator and server initialization
-    - `AadlServer.java` - Eclipse application entry point
-    - `Aadl2LsSetup.java` - Xtext language setup with Guice dependency injection
-    - `Aadl2LsRuntimeModule.java` - Runtime bindings (e.g., global scope provider)
-    - `Aadl2LsIdeModule.java` - IDE service bindings (commands, symbol mapper)
+- **org.osate.aadl.ls/** - The language server bundle. Source root: `src/org/osate/aadl/ls/`.
+  - Top-level package `org.osate.aadl.ls` - launchers and the bound server module:
+    - `Aadl2ServerLauncher.java` - Socket-based server launcher (for testing)
+    - `RunAadl2Server.java` - Standard stdio-based launcher (production)
+    - `AadlServerModule.java` - Custom `ServerModule` with multi-root workspace support
+  - `setup/` - Xtext/Guice wiring:
+    - `Aadl2LsSetup.java`, `Aadl2LsRuntimeModule.java`, `Aadl2LsIdeModule.java`
+    - `ErrorModelLsSetup.java`, `ErrorModelLsRuntimeModule.java` - Error Model annex support
+  - `scoping/` - Standalone-mode scope/project plumbing:
     - `Aadl2LsGlobalScopeProvider.java` - Custom scope provider for language server mode
     - `Aadl2LsProjectDescriptionFactory.java` - Reads project dependencies from `.project` XML files so cross-project references work without an Eclipse workspace
-    - `CommandService.java` - Custom LSP commands (instantiate, analyze latency)
+  - `commands/` - Custom LSP `workspace/executeCommand` handlers:
+    - `CommandService.java` - Dispatcher, registers commands and routes by name
+    - `Command.java` - Command interface
+    - `InstantiateCommand.java`, `AnalyzeLatencyCommand.java` - Per-command logic
+    - `CommandUtil.java` - Shared helpers (argument parsing, URI path cleanup)
+  - `services/` - LSP feature contributions bound in `Aadl2LsIdeModule`:
+    - `AadlHoverService.java` - Hover content (HTML→Markdown documentation)
     - `AadlSymbolNameProvider.java` - Document symbol naming (non-qualified names)
-    - `ErrorModelLsSetup.java` and `ErrorModelLsRuntimeModule.java` - Error Model annex support
+    - `WaitUntilFinishedExtension.java` - `aadlServer/waitUntilFinished` JSON-RPC request used by the osate-cli workspace server to make build completion synchronous
 
+- **plugins/org.osate.aadl.ls.tests/** - JUnit test fragment of `org.osate.aadl.ls`
 - **releng/org.osate.aadl.ls.repository/** - Eclipse p2 repository packaging
 - **releng/aadl.ls.releng/** - Build configuration and launch files
 
@@ -75,7 +77,6 @@ Two launch configurations are available in `org.osate.aadl.ls/.launch/`:
 
 Set VM argument `-Daadl.ls.debug=true` to enable:
 - Log files in workspace `.metadata/.out-*.log` and `.error-*.log`
-- Logback configuration from `plugins/org.osate.aadl.ls.core/logback.xml`
 
 ## Architecture
 
@@ -135,10 +136,11 @@ Implemented in `CommandService.java`:
 
 To add a new command (e.g., for analysis):
 
-1. **Server Side** - Edit `CommandService.java`:
-   - Add command name to `initialize()` list
-   - Add command handler in `execute()` method
-   - Access model via `ILanguageServerAccess.doRead()`
+1. **Server Side** - in `commands/`:
+   - Add a class implementing `Command`. Put the LSP command name in a `NAME` constant
+     and run the work inside `ILanguageServerAccess.doRead(...)` so it sees the live
+     index. Reuse `CommandUtil` for argument parsing and URI cleanup.
+   - Register the new command in `CommandService`'s constructor with `register(...)`.
 
 2. **Client Side** - Edit VSCode extension:
    - Add command to `package.json`
@@ -152,6 +154,8 @@ Xtext services are customized via Guice in `Aadl2LsIdeModule`:
 
 - `bindIExecutableCommandService()` → `CommandService`
 - `bindDocumentSymbolNameProvider()` → `AadlSymbolNameProvider`
+- `bindHoverService()` → `AadlHoverService`
+- `bindILanguageServerExtension()` → `WaitUntilFinishedExtension`
 
 Runtime bindings in `Aadl2LsRuntimeModule`:
 
@@ -161,10 +165,8 @@ Runtime bindings in `Aadl2LsRuntimeModule`:
 ## Important Files
 
 - **MANIFEST.MF** files - Define OSGi bundle dependencies
-- **plugin.xml** - Registers Eclipse application extension point
 - **pom.xml** files - Maven/Tycho build configuration
 - **build.properties** - Defines files to include in plugin JARs
-- **mkjar.xml** - Ant script for manual JAR creation (alternative to Maven)
 
 ## Common Tasks
 

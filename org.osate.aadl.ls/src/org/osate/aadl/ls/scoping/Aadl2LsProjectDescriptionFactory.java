@@ -1,4 +1,4 @@
-package org.osate.aadl.ls.internal;
+package org.osate.aadl.ls.scoping;
 
 import java.io.File;
 import java.util.ArrayList;

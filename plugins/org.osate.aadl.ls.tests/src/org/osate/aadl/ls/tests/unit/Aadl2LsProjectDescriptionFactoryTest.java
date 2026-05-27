@@ -13,7 +13,7 @@ import org.eclipse.xtext.workspace.FileProjectConfig;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.osate.aadl.ls.internal.Aadl2LsProjectDescriptionFactory;
+import org.osate.aadl.ls.scoping.Aadl2LsProjectDescriptionFactory;
 
 public class Aadl2LsProjectDescriptionFactoryTest {
 

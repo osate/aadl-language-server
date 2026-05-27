@@ -21,23 +21,22 @@
  * aries to this license with respect to the terms applicable to their Third Party Software. Third Party Software li-
  * censes only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  */
-package org.osate.aadl.ls.internal;
+package org.osate.aadl.ls.setup;
 
-import org.eclipse.xtext.scoping.IGlobalScopeProvider;
-import org.osate.aadl2.modelsupport.scoping.IEClassGlobalScopeProvider;
+import org.eclipse.xtext.util.Modules2;
+import org.osate.xtext.aadl2.errormodel.ErrorModelStandaloneSetup;
+import org.osate.xtext.aadl2.errormodel.ide.ErrorModelIdeModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
- * Use this class to register components to be used at runtime / without the Equinox extension registry.
+ * Initialization support for running Xtext languages as language servers.
  */
-public class ErrorModelLsRuntimeModule extends org.osate.xtext.aadl2.errormodel.ErrorModelRuntimeModule {
+public class ErrorModelLsSetup extends ErrorModelStandaloneSetup {
 
 	@Override
-	public Class<? extends IGlobalScopeProvider> bindIGlobalScopeProvider() {
-		return Aadl2LsGlobalScopeProvider.class;
-	}
-
-	public Class<? extends IEClassGlobalScopeProvider> bindIEClassGlobalScopeProvider() {
-		return Aadl2LsGlobalScopeProvider.class;
+	public Injector createInjector() {
+		return Guice.createInjector(Modules2.mixin(new ErrorModelLsRuntimeModule(), new ErrorModelIdeModule()));
 	}
 
 }

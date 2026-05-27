@@ -21,22 +21,37 @@
  * aries to this license with respect to the terms applicable to their Third Party Software. Third Party Software li-
  * censes only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  */
-package org.osate.aadl.ls.internal;
+package org.osate.aadl.ls.setup;
 
-import org.eclipse.xtext.util.Modules2;
-import org.osate.xtext.aadl2.Aadl2StandaloneSetup;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import org.eclipse.xtext.ide.server.ILanguageServerExtension;
+import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
+import org.eclipse.xtext.ide.server.hover.HoverService;
+import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
+import org.osate.aadl.ls.commands.CommandService;
+import org.osate.aadl.ls.services.AadlHoverService;
+import org.osate.aadl.ls.services.AadlSymbolNameProvider;
+import org.osate.aadl.ls.services.WaitUntilFinishedExtension;
+import org.osate.xtext.aadl2.ide.AbstractAadl2IdeModule;
 
 /**
- * Initialization support for running Xtext languages as language servers.
+ * Use this class to register ide components.
  */
-public class Aadl2LsSetup extends Aadl2StandaloneSetup {
+public class Aadl2LsIdeModule extends AbstractAadl2IdeModule {
 
-	@Override
-	public Injector createInjector() {
-		return Guice.createInjector(Modules2.mixin(new Aadl2LsRuntimeModule(), new Aadl2LsIdeModule()));
+	public Class<? extends IExecutableCommandService> bindIExecutableCommandService() {
+		return CommandService.class;
+	}
+
+	public Class<? extends DocumentSymbolMapper.DocumentSymbolNameProvider> bindDocumentSymbolNameProvider() {
+		return AadlSymbolNameProvider.class;
+	}
+
+	public Class<? extends HoverService> bindHoverService() {
+		return AadlHoverService.class;
+	}
+
+	public Class<? extends ILanguageServerExtension> bindILanguageServerExtension() {
+		return WaitUntilFinishedExtension.class;
 	}
 
 }

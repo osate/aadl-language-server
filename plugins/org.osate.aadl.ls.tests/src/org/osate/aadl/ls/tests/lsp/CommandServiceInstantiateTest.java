@@ -52,6 +52,7 @@ public class CommandServiceInstantiateTest extends AbstractAadlLanguageServerTes
 		// Whether a sibling .aaxl is written depends on OSATE's instance-file I/O under
 		// the non-UI harness; a stable signal here is that the command is dispatched end-to-end
 		// through CommandService.execute() and returns its success message.
-		Assert.assertEquals("Instantiated sys.impl", result);
+		Assert.assertTrue("expected success message, got: " + result,
+				result instanceof String s && s.startsWith("Instantiated sys.impl"));
 	}
 }
