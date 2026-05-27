@@ -87,6 +87,15 @@ The server uses Xtext's language server framework with custom setup:
 2. **Dependency Injection**: Guice modules combine runtime and IDE modules
 3. **Global Scope**: Custom `Aadl2LsGlobalScopeProvider` loads contributed AADL property sets on-demand
 
+### AADL is case-insensitive
+
+AADL identifiers (package names, classifier names, feature names, etc.) are
+case-insensitive per the AADL standard. Any code that compares an AADL identifier
+to a user-supplied string — for example matching a `<package>::<classifier>`
+argument against the model — must use case-insensitive comparison
+(`String.equalsIgnoreCase`, or normalize both sides). See `CommandService.java`
+for an example in the `aadl.instantiate` lookup.
+
 ### Key Differences from OSATE
 
 - **No Eclipse Workbench**: Runs standalone without UI components
