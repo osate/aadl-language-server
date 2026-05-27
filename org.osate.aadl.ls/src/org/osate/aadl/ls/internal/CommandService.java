@@ -44,16 +44,33 @@ public class CommandService implements IExecutableCommandService {
 			if (uri != null) {
 				try {
 					return access.doRead(uri, (ILanguageServerAccess.Context it) -> {
-						var pkg = (AadlPackage) it.getResource().getContents().get(0);
-						var pub = pkg.getOwnedPublicSection();
+						var contents = it.getResource().getContents();
+						if (contents.isEmpty() || !(contents.get(0) instanceof AadlPackage pkg)) {
+							return "Error: " + uri + " does not contain an AADL package";
+						}
+						int sep = name.lastIndexOf("::");
+						String simpleName = sep < 0 ? name : name.substring(sep + 2);
+						String prefix = sep < 0 ? null : name.substring(0, sep);
+						if (prefix != null && !prefix.equalsIgnoreCase(pkg.getName())) {
+							return "Error: component implementation " + name + " not found.";
+						}
 						ComponentImplementation ci = null;
-						if (pub != null) {
-							for (var cls : pub.getOwnedClassifiers()) {
-								if (cls instanceof ComponentImplementation) {
-									if (name.endsWith(cls.getName())) {
-										ci = (ComponentImplementation) cls;
-									}
+						var sections = new java.util.ArrayList<org.osate.aadl2.PackageSection>();
+						if (pkg.getOwnedPublicSection() != null) {
+							sections.add(pkg.getOwnedPublicSection());
+						}
+						if (pkg.getOwnedPrivateSection() != null) {
+							sections.add(pkg.getOwnedPrivateSection());
+						}
+						for (var section : sections) {
+							for (var cls : section.getOwnedClassifiers()) {
+								if (cls instanceof ComponentImplementation && simpleName.equalsIgnoreCase(cls.getName())) {
+									ci = (ComponentImplementation) cls;
+									break;
 								}
+							}
+							if (ci != null) {
+								break;
 							}
 						}
 						if (ci != null) {
