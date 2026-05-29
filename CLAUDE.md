@@ -124,12 +124,12 @@ The server supports VSCode multi-root workspaces via Xtext's `MultiProjectWorksp
 
 Implemented in `CommandService.java`:
 
-- **aadl.instantiate** - Instantiates component implementation to `.aaxl` file
+- **aadl.instantiate** - Instantiates component implementation to `.aaxl2` file
   - Args: URI of AADL file, component implementation name
   - Uses `InstantiateModel.instantiate(ComponentImplementation)`
 
 - **aadl.analyze.latency** - Runs flow latency analysis on instance model
-  - Args: URI of instance (`.aaxl`) file
+  - Args: URI of instance (`.aaxl2`) file
   - Uses `FlowLatencyAnalysisSwitch`
 
 ## Adding New LSP Commands
