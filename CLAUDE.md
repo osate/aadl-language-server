@@ -39,6 +39,10 @@ The project follows Eclipse plugin architecture with Maven/Tycho build:
 
 ## Building
 
+**You cannot build individual modules of the language server.** The Tycho build
+resolves the whole reactor together — always build from the aggregator root, not
+from a single module directory.
+
 ### Maven Build
 
 Run the Maven launch configuration `aadl.ls.releng.launch` or execute:
