@@ -36,9 +36,9 @@ import org.eclipse.xtext.ide.server.concurrent.IRequestManager;
 import org.eclipse.xtext.ide.server.concurrent.RequestManager;
 import org.eclipse.xtext.resource.IContainer;
 import org.eclipse.xtext.resource.IResourceServiceProvider;
-import org.eclipse.xtext.resource.ResourceServiceProviderServiceLoader;
 import org.eclipse.xtext.resource.containers.ProjectDescriptionBasedContainerManager;
 import org.osate.aadl.ls.scoping.Aadl2LsProjectDescriptionFactory;
+import org.osate.aadl.ls.setup.Aadl2LsResourceServiceProviderRegistry;
 
 /**
  * Custom server module that configures multi-root workspace support for the AADL language server.
@@ -53,7 +53,7 @@ public class AadlServerModule extends ServerModule {
 		binder().bind(ExecutorService.class).toProvider(ExecutorServiceProvider.class);
 
 		bind(LanguageServer.class).to(LanguageServerImpl.class);
-		bind(IResourceServiceProvider.Registry.class).toProvider(ResourceServiceProviderServiceLoader.class);
+		bind(IResourceServiceProvider.Registry.class).toProvider(Aadl2LsResourceServiceProviderRegistry.class);
 		bind(IMultiRootWorkspaceConfigFactory.class).to(MultiRootWorkspaceConfigFactory.class);
 		bind(IProjectDescriptionFactory.class).to(Aadl2LsProjectDescriptionFactory.class);
 		bind(IContainer.Manager.class).to(ProjectDescriptionBasedContainerManager.class);
