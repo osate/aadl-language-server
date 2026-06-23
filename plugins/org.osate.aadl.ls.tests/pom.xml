@@ -48,6 +48,17 @@
 				<configuration>
 					<useUIHarness>false</useUIHarness>
 					<failIfNoTests>true</failIfNoTests>
+					<!--
+						Run only the AllTests suite. Tycho's default test detection matches both the
+						suite and every *Test class it aggregates, which would execute each test twice
+						in one forked JVM. The second execution runs after the LSP server tests have
+						mutated process-global Xtext/EMF state, exposing an order-dependent failure in
+						Aadl2LsGlobalScopeProviderTest. Restricting to the suite runs each test exactly
+						once (matches the OSATE *.tests convention).
+					-->
+					<includes>
+						<include>**/AllTests.class</include>
+					</includes>
 				</configuration>
 			</plugin>
 		</plugins>
