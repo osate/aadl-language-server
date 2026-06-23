@@ -55,6 +55,15 @@ mvn clean verify -f ../.. -Dtycho.localArtifacts=ignore
 The build produces a p2 repository with all required plugin JARs in:
 `releng/org.osate.aadl.ls.repository/target/repository/plugins/`
 
+**`.mvn` marker is load-bearing.** `pom.xml` resolves the OSATE p2 repository via
+`file://${maven.multiModuleProjectDirectory}/../osate2/...`, which must point at the
+sibling `osate2` checkout. A `.mvn/` directory at the `aadl-language-server` root pins
+`maven.multiModuleProjectDirectory` to that root for every invocation style (`-f
+osate2-server/pom.xml` from the repo root, `mvn` from inside a module, etc.). Without
+it, `-f osate2-server/pom.xml` resolves the repository to the nonexistent
+`aadl-language-server/osate2` and the build fails with "No repository found at ...".
+Do not delete `aadl-language-server/.mvn/`.
+
 ### Prerequisites
 
 - OSATE development environment (see osate.org)

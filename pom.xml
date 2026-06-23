@@ -46,7 +46,7 @@
 			<!--
 			<url>http://osate-build.sei.cmu.edu/download/osate/testing/updates/</url>
 -->
-			<url>file:///Users/lwrage/Projects/OSATE/osate2_2025-12-dev/git/osate2/releng/org.osate.build.repository/target/repository/</url>
+			<url>file://${maven.multiModuleProjectDirectory}/../osate2/releng/org.osate.build.repository/target/repository/</url>
 			<layout>p2</layout>
 		</repository>
 		<repository>
