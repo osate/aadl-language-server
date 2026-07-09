@@ -23,9 +23,15 @@
  *******************************************************************************/
 package org.osate.aadl.ls.commands;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.eclipse.emf.common.util.URI;
+import org.osate.aadl2.instance.InstanceObject;
+import org.osate.result.AnalysisResult;
+import org.osate.result.Result;
 
 import com.google.gson.JsonPrimitive;
 
@@ -47,5 +53,37 @@ final class CommandUtil {
 
 	static String toFsPath(URI uri) {
 		return uri.toFileString().replaceAll("^/+", "/");
+	}
+
+	static void appendInstanceDiagnostics(StringBuilder output, AnalysisResult analysisResult, String instancePath) {
+		var diagLines = new ArrayList<String>();
+		for (Result r : analysisResult.getResults()) {
+			collectInstanceDiagnostics(r, instancePath, diagLines);
+		}
+		Collections.sort(diagLines);
+		for (var line : diagLines) {
+			output.append(line).append('\n');
+		}
+	}
+
+	private static void collectInstanceDiagnostics(Result r, String instancePath, List<String> lines) {
+		String elementPath = "<unknown>";
+		var modelElement = r.getModelElement();
+		if (modelElement instanceof InstanceObject io) {
+			elementPath = io.getComponentInstancePath();
+		}
+		for (var d : r.getDiagnostics()) {
+			var path = elementPath;
+			var diagElement = d.getModelElement();
+			if (diagElement instanceof InstanceObject io) {
+				path = io.getComponentInstancePath();
+			}
+			lines.add(instancePath + ":" + path + ": "
+					+ d.getDiagnosticType().getName().toLowerCase(Locale.ROOT)
+					+ ": " + d.getMessage());
+		}
+		for (var sub : r.getSubResults()) {
+			collectInstanceDiagnostics(sub, instancePath, lines);
+		}
 	}
 }

@@ -33,8 +33,8 @@ import org.osate.aadl.ls.commands.CommandService;
 public class CommandServiceInitializeTest {
 
 	@Test
-	public void registersInstantiateAndLatencyCommands() {
+	public void registersCustomCommands() {
 		List<String> commands = new CommandService().initialize();
-		assertEquals(List.of("aadl.instantiate", "aadl.analyze.latency"), commands);
+		assertEquals(List.of("aadl.instantiate", "aadl.analyze.latency", "aadl.analyze.busLoad"), commands);
 	}
 }

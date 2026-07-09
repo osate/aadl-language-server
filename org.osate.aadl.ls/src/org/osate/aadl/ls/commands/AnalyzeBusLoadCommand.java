@@ -23,27 +23,29 @@
  *******************************************************************************/
 package org.osate.aadl.ls.commands;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
-import org.osate.aadl2.Element;
 import org.osate.aadl2.instance.SystemInstance;
-import org.osate.analysis.flows.FlowLatencyAnalysisSwitch;
-import org.osate.result.AnalysisResult;
+import org.osate.analysis.resource.budgets.busload.NewBusLoadAnalysis;
 
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonPrimitive;
 
-final class AnalyzeLatencyCommand implements Command {
+final class AnalyzeBusLoadCommand implements Command {
 
-	static final String NAME = "aadl.analyze.latency";
+	static final String NAME = "aadl.analyze.busLoad";
+	private static final String REPORTS_DIR = "reports";
+	private static final String ANALYSIS_DIR = "BusLoad";
+	private static final String REPORT_NAME_TAIL = "__BusLoad.csv";
 
 	@Override
 	public String name() {
@@ -57,47 +59,57 @@ final class AnalyzeLatencyCommand implements Command {
 		if (iuri == null) {
 			return "Param Uri Missing";
 		}
-		var args = params.getArguments();
-		boolean asynchronousSystem = CommandUtil.optBool(args, 1, true);
-		boolean majorFrameDelay = CommandUtil.optBool(args, 2, true);
-		boolean worstCaseDeadline = CommandUtil.optBool(args, 3, true);
-		boolean bestCaseEmptyQueue = CommandUtil.optBool(args, 4, true);
-		boolean disableQueuingLatency = CommandUtil.optBool(args, 5, false);
 
 		var uri = URI.createURI(iuri);
 		Resource res = new ResourceSetImpl().getResource(uri, true);
-		SystemInstance instance = (SystemInstance) res.getContents().get(0);
-		var duri = instance.getComponentImplementation().eResource().getURI();
+		if (res.getContents().isEmpty() || !(res.getContents().get(0) instanceof SystemInstance instance)) {
+			return "Error: " + iuri + " does not contain a system instance";
+		}
+		var componentImplementation = instance.getComponentImplementation();
+		var duri = componentImplementation == null || componentImplementation.eResource() == null
+				? uri
+				: componentImplementation.eResource().getURI();
 		try {
-			return access.doRead(duri.toString(), ctx -> runAnalysis(uri, iuri, asynchronousSystem, majorFrameDelay,
-					worstCaseDeadline, bestCaseEmptyQueue, disableQueuingLatency)).get();
+			return access.doRead(duri.toString(), ctx -> runAnalysis(uri, iuri)).get();
 		} catch (InterruptedException | ExecutionException e) {
 			return e.getMessage();
 		}
 	}
 
-	private static String runAnalysis(URI uri, String iuri, boolean asynchronousSystem, boolean majorFrameDelay,
-			boolean worstCaseDeadline, boolean bestCaseEmptyQueue, boolean disableQueuingLatency) {
-		var resource = new ResourceSetImpl().getResource(uri, true);
-		EList<EObject> rl = resource.getContents();
-
+	private static String runAnalysis(URI uri, String iuri) {
 		var output = new StringBuilder();
-		output.append("Ran latency analysis of ").append(iuri).append('\n');
-		if (rl.isEmpty() || !(rl.get(0) instanceof Element)) {
+		output.append("Ran bus load analysis of ").append(iuri).append('\n');
+
+		var resource = new ResourceSetImpl().getResource(uri, true);
+		if (resource.getContents().isEmpty() || !(resource.getContents().get(0) instanceof SystemInstance inst)) {
+			return "Error: " + iuri + " does not contain a system instance";
+		}
+
+		try {
+			createReportDirectory(uri);
+		} catch (IOException e) {
+			output.append("Exception: ").append(e.getMessage());
 			return output.toString();
 		}
-		var inst = (SystemInstance) rl.get(0);
-		var checker = new FlowLatencyAnalysisSwitch(inst);
-		AnalysisResult ar = checker.invokeAndSaveResult(inst, null, asynchronousSystem, majorFrameDelay,
-				worstCaseDeadline, bestCaseEmptyQueue, disableQueuingLatency);
 
-		var resultURI = ar.eResource().getURI();
-		var csvURI = resultURI.trimFileExtension().appendFileExtension("csv");
-		output.append(CommandUtil.toFsPath(resultURI)).append('\n');
+		var analysisResult = new NewBusLoadAnalysis().invoke(null, inst);
+		var csvURI = uri.trimSegments(1)
+				.appendSegment(REPORTS_DIR)
+				.appendSegment(ANALYSIS_DIR)
+				.appendSegment(uri.trimFileExtension().lastSegment() + REPORT_NAME_TAIL);
 		output.append(CommandUtil.toFsPath(csvURI)).append('\n');
 
-		var instancePath = CommandUtil.toFsPath(inst.eResource().getURI());
-		CommandUtil.appendInstanceDiagnostics(output, ar, instancePath);
+		if (analysisResult != null) {
+			var instancePath = CommandUtil.toFsPath(inst.eResource().getURI());
+			CommandUtil.appendInstanceDiagnostics(output, analysisResult, instancePath);
+		}
 		return output.toString();
+	}
+
+	private static void createReportDirectory(URI instanceURI) throws IOException {
+		var reportURI = instanceURI.trimSegments(1).appendSegment(REPORTS_DIR).appendSegment(ANALYSIS_DIR);
+		if (reportURI.isFile()) {
+			Files.createDirectories(Path.of(CommandUtil.toFsPath(reportURI)));
+		}
 	}
 }

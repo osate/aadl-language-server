@@ -145,6 +145,10 @@ Implemented in `CommandService.java`:
   - Args: URI of instance (`.aaxl2`) file
   - Uses `FlowLatencyAnalysisSwitch`
 
+- **aadl.analyze.busLoad** - Runs bus load analysis on instance model
+  - Args: URI of instance (`.aaxl2`) file
+  - Uses `NewBusLoadAnalysis`
+
 ## Adding New LSP Commands
 
 To add a new command (e.g., for analysis):

@@ -28,6 +28,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.osate.aadl2,
  org.osate.aadl2.instantiation,
  org.osate.analysis.flows,
+ org.osate.analysis.resource.budgets,
  org.osate.results,
  org.aopalliance;bundle-version="1.0.0"
 Export-Package: org.osate.aadl.ls

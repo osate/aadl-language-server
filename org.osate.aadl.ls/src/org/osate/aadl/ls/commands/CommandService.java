@@ -39,6 +39,7 @@ public class CommandService implements IExecutableCommandService {
 	public CommandService() {
 		register(new InstantiateCommand());
 		register(new AnalyzeLatencyCommand());
+		register(new AnalyzeBusLoadCommand());
 	}
 
 	private void register(Command command) {
