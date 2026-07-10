@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.osate.aadl.ls.tests.lsp.CommandServiceBusLoadTest;
 import org.osate.aadl.ls.tests.lsp.CommandServiceInstantiateTest;
+import org.osate.aadl.ls.tests.lsp.CommandServiceReachabilityTest;
 import org.osate.aadl.ls.tests.lsp.DiagnosticsSmokeTest;
 import org.osate.aadl.ls.tests.lsp.DocumentSymbolLspTest;
 import org.osate.aadl.ls.tests.lsp.Emv2ParsingTest;
@@ -45,6 +46,7 @@ import org.osate.aadl.ls.tests.unit.CommandServiceInitializeTest;
 		DiagnosticsSmokeTest.class,
 		DocumentSymbolLspTest.class,
 		CommandServiceBusLoadTest.class,
+		CommandServiceReachabilityTest.class,
 		CommandServiceInstantiateTest.class,
 		MultiRootLinkingTest.class,
 		Emv2ParsingTest.class

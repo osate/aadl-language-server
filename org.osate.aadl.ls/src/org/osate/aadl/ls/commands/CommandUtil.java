@@ -29,8 +29,11 @@ import java.util.List;
 import java.util.Locale;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EObject;
+import org.osate.aadl2.NamedElement;
 import org.osate.aadl2.instance.InstanceObject;
 import org.osate.result.AnalysisResult;
+import org.osate.result.Diagnostic;
 import org.osate.result.Result;
 
 import com.google.gson.JsonPrimitive;
@@ -57,6 +60,7 @@ final class CommandUtil {
 
 	static void appendInstanceDiagnostics(StringBuilder output, AnalysisResult analysisResult, String instancePath) {
 		var diagLines = new ArrayList<String>();
+		collectDiagnostics(analysisResult.getModelElement(), analysisResult.getDiagnostics(), instancePath, diagLines);
 		for (Result r : analysisResult.getResults()) {
 			collectInstanceDiagnostics(r, instancePath, diagLines);
 		}
@@ -67,23 +71,30 @@ final class CommandUtil {
 	}
 
 	private static void collectInstanceDiagnostics(Result r, String instancePath, List<String> lines) {
-		String elementPath = "<unknown>";
-		var modelElement = r.getModelElement();
-		if (modelElement instanceof InstanceObject io) {
-			elementPath = io.getComponentInstancePath();
+		collectDiagnostics(r.getModelElement(), r.getDiagnostics(), instancePath, lines);
+		for (var sub : r.getSubResults()) {
+			collectInstanceDiagnostics(sub, instancePath, lines);
 		}
-		for (var d : r.getDiagnostics()) {
-			var path = elementPath;
-			var diagElement = d.getModelElement();
-			if (diagElement instanceof InstanceObject io) {
-				path = io.getComponentInstancePath();
-			}
+	}
+
+	private static void collectDiagnostics(EObject modelElement, Iterable<Diagnostic> diagnostics, String instancePath,
+			List<String> lines) {
+		var elementPath = elementPath(modelElement, "<unknown>");
+		for (var d : diagnostics) {
+			var path = elementPath(d.getModelElement(), elementPath);
 			lines.add(instancePath + ":" + path + ": "
 					+ d.getDiagnosticType().getName().toLowerCase(Locale.ROOT)
 					+ ": " + d.getMessage());
 		}
-		for (var sub : r.getSubResults()) {
-			collectInstanceDiagnostics(sub, instancePath, lines);
+	}
+
+	private static String elementPath(EObject element, String fallback) {
+		if (element instanceof InstanceObject io) {
+			return io.getComponentInstancePath();
 		}
+		if (element instanceof NamedElement ne && ne.getName() != null) {
+			return ne.getName();
+		}
+		return fallback;
 	}
 }

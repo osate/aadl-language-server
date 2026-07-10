@@ -35,6 +35,7 @@ public class CommandServiceInitializeTest {
 	@Test
 	public void registersCustomCommands() {
 		List<String> commands = new CommandService().initialize();
-		assertEquals(List.of("aadl.instantiate", "aadl.analyze.latency", "aadl.analyze.busLoad"), commands);
+		assertEquals(List.of("aadl.instantiate", "aadl.analyze.latency", "aadl.analyze.busLoad",
+				"aadl.analyze.reachability"), commands);
 	}
 }
