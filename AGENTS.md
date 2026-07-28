@@ -142,12 +142,16 @@ Implemented in `CommandService.java`:
   - Uses `InstantiateModel.instantiate(ComponentImplementation)`
 
 - **aadl.analyze.latency** - Runs flow latency analysis on instance model
-  - Args: URI of instance (`.aaxl2`) file
+  - Args: URI of instance (`.aaxl2`) file and five optional analysis-setting booleans
   - Uses `FlowLatencyAnalysisSwitch`
 
 - **aadl.analyze.busLoad** - Runs bus load analysis on instance model
   - Args: URI of instance (`.aaxl2`) file
   - Uses `NewBusLoadAnalysis`
+
+- **aadl.analyze.reachability** - Runs SOM mode reachability analysis on instance model
+  - Args: URI of instance (`.aaxl2`) file and optional report-format booleans
+  - Uses `ReachabilityAnalyzer`
 
 ## Adding New LSP Commands
 

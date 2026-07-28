@@ -64,8 +64,17 @@ final class CommandUtil {
 		for (Result r : analysisResult.getResults()) {
 			collectInstanceDiagnostics(r, instancePath, diagLines);
 		}
-		Collections.sort(diagLines);
-		for (var line : diagLines) {
+		appendSortedDiagnosticLines(output, diagLines);
+	}
+
+	static String formatInstanceDiagnostic(String instancePath, String elementPath, String severity, String message) {
+		return instancePath + ":" + elementPath + ": " + severity.toLowerCase(Locale.ROOT) + ": "
+				+ String.valueOf(message).replace('\r', ' ').replace('\n', ' ');
+	}
+
+	static void appendSortedDiagnosticLines(StringBuilder output, List<String> diagnosticLines) {
+		Collections.sort(diagnosticLines);
+		for (var line : diagnosticLines) {
 			output.append(line).append('\n');
 		}
 	}
@@ -82,9 +91,7 @@ final class CommandUtil {
 		var elementPath = elementPath(modelElement, "<unknown>");
 		for (var d : diagnostics) {
 			var path = elementPath(d.getModelElement(), elementPath);
-			lines.add(instancePath + ":" + path + ": "
-					+ d.getDiagnosticType().getName().toLowerCase(Locale.ROOT)
-					+ ": " + d.getMessage());
+			lines.add(formatInstanceDiagnostic(instancePath, path, d.getDiagnosticType().getName(), d.getMessage()));
 		}
 	}
 

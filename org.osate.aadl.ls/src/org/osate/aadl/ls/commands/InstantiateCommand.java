@@ -24,7 +24,6 @@
 package org.osate.aadl.ls.commands;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -91,21 +90,17 @@ final class InstantiateCommand implements Command {
 			result.append("Instantiated " + name + " as " + si.getName() + "\n");
 
 			var diags = ((QueuingAnalysisErrorReporter) errorManager.getReporter(si.eResource())).getErrors();
+			var diagLines = new ArrayList<String>();
 			for (var d : diags) {
-				result.append(CommandUtil.toFsPath(si.eResource().getURI()));
-				result.append(':');
 				var e = d.where;
 				while (Objects.nonNull(e) && !(e instanceof InstanceObject)) {
 					e = e.getOwner();
 				}
 				var io = (InstanceObject) e;
-				result.append(io.getComponentInstancePath());
-				result.append(": ");
-				result.append(d.kind.toLowerCase(Locale.ROOT));
-				result.append(": ");
-				result.append(d.message);
-				result.append('\n');
+				diagLines.add(CommandUtil.formatInstanceDiagnostic(CommandUtil.toFsPath(si.eResource().getURI()),
+						io.getComponentInstancePath(), d.kind, d.message));
 			}
+			CommandUtil.appendSortedDiagnosticLines(result, diagLines);
 		} catch (Exception e) {
 			result.append("Exception: " + e.getMessage());
 			e.printStackTrace();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file). 
+ * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file).
  * All Rights Reserved.
  *
  * NO WARRANTY. ALL MATERIAL IS FURNISHED ON AN "AS-IS" BASIS. CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY
@@ -21,37 +21,25 @@
  * to this license with respect to the terms applicable to their Third Party Software. Third Party Software licenses
  * only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  *******************************************************************************/
-package org.osate.aadl.ls.tests;
+package org.osate.aadl.ls.commands;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.osate.aadl.ls.commands.CommandUtilTest;
-import org.osate.aadl.ls.tests.lsp.CommandServiceBusLoadTest;
-import org.osate.aadl.ls.tests.lsp.CommandServiceInstantiateTest;
-import org.osate.aadl.ls.tests.lsp.CommandServiceReachabilityTest;
-import org.osate.aadl.ls.tests.lsp.DiagnosticsSmokeTest;
-import org.osate.aadl.ls.tests.lsp.DocumentSymbolLspTest;
-import org.osate.aadl.ls.tests.lsp.Emv2ParsingTest;
-import org.osate.aadl.ls.tests.lsp.MultiRootLinkingTest;
-import org.osate.aadl.ls.tests.unit.Aadl2LsGlobalScopeProviderTest;
-import org.osate.aadl.ls.tests.unit.Aadl2LsProjectDescriptionFactoryTest;
-import org.osate.aadl.ls.tests.unit.AadlSymbolNameProviderTest;
-import org.osate.aadl.ls.tests.unit.CommandServiceInitializeTest;
+import java.util.ArrayList;
+import java.util.List;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-		CommandUtilTest.class,
-		CommandServiceInitializeTest.class,
-		Aadl2LsProjectDescriptionFactoryTest.class,
-		AadlSymbolNameProviderTest.class,
-		Aadl2LsGlobalScopeProviderTest.class,
-		DiagnosticsSmokeTest.class,
-		DocumentSymbolLspTest.class,
-		CommandServiceBusLoadTest.class,
-		CommandServiceReachabilityTest.class,
-		CommandServiceInstantiateTest.class,
-		MultiRootLinkingTest.class,
-		Emv2ParsingTest.class
-})
-public class AllTests {
+import org.junit.Assert;
+import org.junit.Test;
+
+public class CommandUtilTest {
+
+	@Test
+	public void instanceDiagnosticsAreSingleLineAndSorted() {
+		var first = CommandUtil.formatInstanceDiagnostic("instance.aaxl2", "a", "WARNING",
+				"first\r\nsecond");
+		var second = CommandUtil.formatInstanceDiagnostic("instance.aaxl2", "b", "ERROR", "third");
+		Assert.assertEquals("instance.aaxl2:a: warning: first  second", first);
+
+		var output = new StringBuilder();
+		CommandUtil.appendSortedDiagnosticLines(output, new ArrayList<>(List.of(second, first)));
+		Assert.assertEquals(first + "\n" + second + "\n", output.toString());
+	}
 }
