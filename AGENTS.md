@@ -84,7 +84,7 @@ Two launch configurations are available in `org.osate.aadl.ls/.launch/`:
 2. **Aadl2ServerLauncher.launch** - Socket-based server (for debugging)
    - Main class: `org.osate.aadl.ls.Aadl2ServerLauncher`
    - Args: `-host localhost -port 6215 -trace`
-   - Useful for testing with socket-based clients
+   - Useful for debugging the socket transport with an external LSP client
 
 ### Debug Mode
 
