@@ -33,10 +33,12 @@ import org.osate.aadl.ls.tests.lsp.DiagnosticsSmokeTest;
 import org.osate.aadl.ls.tests.lsp.DocumentSymbolLspTest;
 import org.osate.aadl.ls.tests.lsp.Emv2ParsingTest;
 import org.osate.aadl.ls.tests.lsp.MultiRootLinkingTest;
+import org.osate.aadl.ls.tests.lsp.PredeclaredPropertyDefinitionLspTest;
 import org.osate.aadl.ls.tests.unit.Aadl2LsGlobalScopeProviderTest;
 import org.osate.aadl.ls.tests.unit.Aadl2LsProjectDescriptionFactoryTest;
 import org.osate.aadl.ls.tests.unit.AadlSymbolNameProviderTest;
 import org.osate.aadl.ls.tests.unit.CommandServiceInitializeTest;
+import org.osate.aadl.ls.tests.unit.ContributedAadlContentServiceTest;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -45,8 +47,10 @@ import org.osate.aadl.ls.tests.unit.CommandServiceInitializeTest;
 		Aadl2LsProjectDescriptionFactoryTest.class,
 		AadlSymbolNameProviderTest.class,
 		Aadl2LsGlobalScopeProviderTest.class,
+		ContributedAadlContentServiceTest.class,
 		DiagnosticsSmokeTest.class,
 		DocumentSymbolLspTest.class,
+		PredeclaredPropertyDefinitionLspTest.class,
 		CommandServiceBusLoadTest.class,
 		CommandServiceReachabilityTest.class,
 		CommandServiceInstantiateTest.class,

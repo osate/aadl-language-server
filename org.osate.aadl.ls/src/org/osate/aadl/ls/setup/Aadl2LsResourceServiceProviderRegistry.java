@@ -41,8 +41,8 @@ import com.google.inject.Singleton;
  * SPI and, for a given file extension, the last setup processed wins. The bundled OSATE plugins
  * register two setups that both claim the {@code aadl} extension:
  * <ul>
- *   <li>{@code Aadl2LsSetup} (this bundle) — mixes in {@link Aadl2LsIdeModule}, which binds the
- *       {@code WaitUntilFinishedExtension} {@code @JsonRequest} endpoint and the standalone
+	 *   <li>{@code Aadl2LsSetup} (this bundle) — mixes in {@link Aadl2LsIdeModule}, which binds the
+	 *       {@code AadlLanguageServerExtension} {@code @JsonRequest} endpoints and the standalone
  *       {@code Aadl2LsGlobalScopeProvider}; and</li>
  *   <li>{@code org.osate.xtext.aadl2.ide.Aadl2IdeSetup} (from the {@code .ide} bundle) — the stock
  *       OSATE IDE wiring, which binds neither.</li>

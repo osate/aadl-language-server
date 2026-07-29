@@ -23,30 +23,46 @@
  *******************************************************************************/
 package org.osate.aadl.ls.services;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.ide.server.ILanguageServerExtension;
 import org.eclipse.xtext.resource.IResourceDescription;
 
+import com.google.inject.Inject;
+
 /**
- * Custom JSON-RPC endpoint {@code aadlServer/waitUntilFinished} used by the OSATE CLI workspace
- * server to block until Xtext's next background build completes. Each request returns a fresh
- * promise; {@link #afterBuild} resolves every promise queued at that moment.
+ * Custom JSON-RPC endpoints for the AADL language server.
  *
- * Since LSP4J dispatches inbound JSON-RPC messages serially on the reader thread, any
- * {@code didOpen} / {@code didChangeWatchedFiles} arriving before this request has already
- * submitted its {@code runBuildable} to the request manager by the time our handler runs, so
- * the next {@code afterBuild} is the one we want. The caller MUST only send
- * {@code aadlServer/waitUntilFinished} after a notification that triggers a build; otherwise
- * the promise will not resolve.
+ * <p>{@code aadlServer/waitUntilFinished} is used by the OSATE CLI workspace server to block
+ * until Xtext's next background build completes. Each request returns a fresh promise;
+ * {@link #afterBuild} resolves every promise queued at that moment. Since LSP4J dispatches
+ * inbound JSON-RPC messages serially on the reader thread, any {@code didOpen} /
+ * {@code didChangeWatchedFiles} arriving before this request has already submitted its
+ * {@code runBuildable} to the request manager by the time our handler runs, so the next
+ * {@code afterBuild} is the one we want. The caller MUST only send this request after a
+ * notification that triggers a build; otherwise the promise will not resolve.
+ *
+ * <p>{@code aadlServer/readContributedAadl} returns the source text of a registered AADL
+ * resource contributed by an OSATE plugin. Editors use it to display read-only definitions
+ * whose locations use {@code platform:/plugin} URIs.
  */
-public class WaitUntilFinishedExtension implements ILanguageServerExtension, ILanguageServerAccess.IBuildListener {
+public class AadlLanguageServerExtension implements ILanguageServerExtension, ILanguageServerAccess.IBuildListener {
 
 	private final List<CompletableFuture<Boolean>> pendingPromises = new ArrayList<>();
+	private final ContributedAadlContentService contributedAadlContentService;
+
+	@Inject
+	public AadlLanguageServerExtension(ContributedAadlContentService contributedAadlContentService) {
+		this.contributedAadlContentService = contributedAadlContentService;
+	}
 
 	@Override
 	public void initialize(ILanguageServerAccess access) {
@@ -58,6 +74,26 @@ public class WaitUntilFinishedExtension implements ILanguageServerExtension, ILa
 		var promise = new CompletableFuture<Boolean>();
 		pendingPromises.add(promise);
 		return promise;
+	}
+
+	@JsonRequest("aadlServer/readContributedAadl")
+	public CompletableFuture<String> readContributedAadl(ReadContributedAadlParams params) {
+		if (params == null) {
+			return failedFuture(ResponseErrorCode.InvalidParams, "A contributed AADL URI is required");
+		}
+
+		try {
+			return CompletableFuture.completedFuture(contributedAadlContentService.read(params.getUri()));
+		} catch (IllegalArgumentException exception) {
+			return failedFuture(ResponseErrorCode.InvalidParams, exception.getMessage());
+		} catch (IOException exception) {
+			return failedFuture(ResponseErrorCode.RequestFailed, "Unable to read the contributed AADL resource");
+		}
+	}
+
+	private static <T> CompletableFuture<T> failedFuture(ResponseErrorCode code, String message) {
+		return CompletableFuture.failedFuture(
+				new ResponseErrorException(new ResponseError(code, message, null)));
 	}
 
 	@Override

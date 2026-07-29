@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file). 
+ * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file).
  * All Rights Reserved.
  *
  * NO WARRANTY. ALL MATERIAL IS FURNISHED ON AN "AS-IS" BASIS. CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY
@@ -21,37 +21,51 @@
  * to this license with respect to the terms applicable to their Third Party Software. Third Party Software licenses
  * only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  *******************************************************************************/
-package org.osate.aadl.ls.setup;
+package org.osate.aadl.ls.tests.lsp;
 
-import org.eclipse.xtext.ide.server.ILanguageServerExtension;
-import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
-import org.eclipse.xtext.ide.server.hover.HoverService;
-import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
-import org.osate.aadl.ls.commands.CommandService;
-import org.osate.aadl.ls.services.AadlHoverService;
-import org.osate.aadl.ls.services.AadlSymbolNameProvider;
-import org.osate.aadl.ls.services.AadlLanguageServerExtension;
-import org.osate.xtext.aadl2.ide.AbstractAadl2IdeModule;
+import static org.junit.Assert.assertTrue;
 
-/**
- * Use this class to register ide components.
- */
-public class Aadl2LsIdeModule extends AbstractAadl2IdeModule {
+import java.io.IOException;
 
-	public Class<? extends IExecutableCommandService> bindIExecutableCommandService() {
-		return CommandService.class;
+import org.eclipse.lsp4j.Location;
+import org.junit.Assert;
+import org.junit.Test;
+import org.osate.aadl.ls.services.ContributedAadlContentService;
+
+public class PredeclaredPropertyDefinitionLspTest extends AbstractAadlLanguageServerTest {
+
+	@Test
+	public void definitionTargetsBundledPropertySet() {
+		testDefinition(configuration -> {
+			configuration.setFilePath("uses-predeclared.aadl");
+			configuration.setModel("""
+					package UsesPredeclared
+					public
+					    thread t
+					        properties
+					            Period => 10 ms;
+					    end t;
+					end UsesPredeclared;
+					""");
+			configuration.setLine(4);
+			configuration.setColumn(14);
+			configuration.setAssertDefinitions(definitions -> {
+				Assert.assertEquals(1, definitions.size());
+				Location definition = definitions.get(0);
+				assertTrue(definition.getUri().startsWith("platform:/plugin/"));
+				assertTrue(definition.getUri().endsWith("/Timing_Properties.aadl"));
+				assertRangeStartsOnPeriodDeclaration(definition);
+			});
+		});
 	}
 
-	public Class<? extends DocumentSymbolMapper.DocumentSymbolNameProvider> bindDocumentSymbolNameProvider() {
-		return AadlSymbolNameProvider.class;
+	private static void assertRangeStartsOnPeriodDeclaration(Location definition) {
+		try {
+			String contents = new ContributedAadlContentService().read(definition.getUri());
+			String line = contents.lines().skip(definition.getRange().getStart().getLine()).findFirst().orElseThrow();
+			assertTrue(line.trim().startsWith("Period:"));
+		} catch (IOException exception) {
+			throw new AssertionError("Unable to read definition target", exception);
+		}
 	}
-
-	public Class<? extends HoverService> bindHoverService() {
-		return AadlHoverService.class;
-	}
-
-	public Class<? extends ILanguageServerExtension> bindILanguageServerExtension() {
-		return AadlLanguageServerExtension.class;
-	}
-
 }

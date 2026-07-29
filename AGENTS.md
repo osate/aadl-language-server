@@ -31,7 +31,7 @@ The project follows Eclipse plugin architecture with Maven/Tycho build:
   - `services/` - LSP feature contributions bound in `Aadl2LsIdeModule`:
     - `AadlHoverService.java` - Hover content (HTML→Markdown documentation)
     - `AadlSymbolNameProvider.java` - Document symbol naming (non-qualified names)
-    - `WaitUntilFinishedExtension.java` - `aadlServer/waitUntilFinished` JSON-RPC request used by the osate-cli workspace server to make build completion synchronous
+    - `AadlLanguageServerExtension.java` - custom JSON-RPC requests for synchronous CLI builds and read-only access to plugin-contributed AADL sources
 
 - **plugins/org.osate.aadl.ls.tests/** - JUnit test fragment of `org.osate.aadl.ls`
 - **releng/org.osate.aadl.ls.repository/** - Eclipse p2 repository packaging
@@ -176,7 +176,7 @@ Xtext services are customized via Guice in `Aadl2LsIdeModule`:
 - `bindIExecutableCommandService()` → `CommandService`
 - `bindDocumentSymbolNameProvider()` → `AadlSymbolNameProvider`
 - `bindHoverService()` → `AadlHoverService`
-- `bindILanguageServerExtension()` → `WaitUntilFinishedExtension`
+- `bindILanguageServerExtension()` → `AadlLanguageServerExtension`
 
 Runtime bindings in `Aadl2LsRuntimeModule`:
 

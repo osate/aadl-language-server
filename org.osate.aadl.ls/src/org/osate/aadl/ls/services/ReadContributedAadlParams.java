@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file). 
+ * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file).
  * All Rights Reserved.
  *
  * NO WARRANTY. ALL MATERIAL IS FURNISHED ON AN "AS-IS" BASIS. CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY
@@ -21,37 +21,24 @@
  * to this license with respect to the terms applicable to their Third Party Software. Third Party Software licenses
  * only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  *******************************************************************************/
-package org.osate.aadl.ls.setup;
+package org.osate.aadl.ls.services;
 
-import org.eclipse.xtext.ide.server.ILanguageServerExtension;
-import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
-import org.eclipse.xtext.ide.server.hover.HoverService;
-import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
-import org.osate.aadl.ls.commands.CommandService;
-import org.osate.aadl.ls.services.AadlHoverService;
-import org.osate.aadl.ls.services.AadlSymbolNameProvider;
-import org.osate.aadl.ls.services.AadlLanguageServerExtension;
-import org.osate.xtext.aadl2.ide.AbstractAadl2IdeModule;
+public class ReadContributedAadlParams {
+	private String uri;
 
-/**
- * Use this class to register ide components.
- */
-public class Aadl2LsIdeModule extends AbstractAadl2IdeModule {
-
-	public Class<? extends IExecutableCommandService> bindIExecutableCommandService() {
-		return CommandService.class;
+	public ReadContributedAadlParams() {
+		// Required for JSON deserialization.
 	}
 
-	public Class<? extends DocumentSymbolMapper.DocumentSymbolNameProvider> bindDocumentSymbolNameProvider() {
-		return AadlSymbolNameProvider.class;
+	public ReadContributedAadlParams(String uri) {
+		this.uri = uri;
 	}
 
-	public Class<? extends HoverService> bindHoverService() {
-		return AadlHoverService.class;
+	public String getUri() {
+		return uri;
 	}
 
-	public Class<? extends ILanguageServerExtension> bindILanguageServerExtension() {
-		return AadlLanguageServerExtension.class;
+	public void setUri(String uri) {
+		this.uri = uri;
 	}
-
 }

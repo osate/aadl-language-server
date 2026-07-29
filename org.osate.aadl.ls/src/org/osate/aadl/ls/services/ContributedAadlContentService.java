@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file). 
+ * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file).
  * All Rights Reserved.
  *
  * NO WARRANTY. ALL MATERIAL IS FURNISHED ON AN "AS-IS" BASIS. CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY
@@ -21,37 +21,36 @@
  * to this license with respect to the terms applicable to their Third Party Software. Third Party Software licenses
  * only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  *******************************************************************************/
-package org.osate.aadl.ls.setup;
+package org.osate.aadl.ls.services;
 
-import org.eclipse.xtext.ide.server.ILanguageServerExtension;
-import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
-import org.eclipse.xtext.ide.server.hover.HoverService;
-import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
-import org.osate.aadl.ls.commands.CommandService;
-import org.osate.aadl.ls.services.AadlHoverService;
-import org.osate.aadl.ls.services.AadlSymbolNameProvider;
-import org.osate.aadl.ls.services.AadlLanguageServerExtension;
-import org.osate.xtext.aadl2.ide.AbstractAadl2IdeModule;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-/**
- * Use this class to register ide components.
- */
-public class Aadl2LsIdeModule extends AbstractAadl2IdeModule {
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.resource.URIConverter;
+import org.osate.pluginsupport.PluginSupportUtil;
 
-	public Class<? extends IExecutableCommandService> bindIExecutableCommandService() {
-		return CommandService.class;
+public class ContributedAadlContentService {
+
+	public String read(String uriText) throws IOException {
+		if (uriText == null || uriText.isBlank()) {
+			throw new IllegalArgumentException("A contributed AADL URI is required");
+		}
+
+		final URI uri;
+		try {
+			uri = URI.createURI(uriText);
+		} catch (IllegalArgumentException exception) {
+			throw new IllegalArgumentException("The contributed AADL URI is malformed", exception);
+		}
+
+		if (!uri.isPlatformPlugin() || uri.isRelative() || uri.hasQuery() || uri.hasFragment()
+				|| !PluginSupportUtil.getContributedAadl().contains(uri)) {
+			throw new IllegalArgumentException("The URI does not identify a registered contributed AADL resource");
+		}
+
+		try (var input = URIConverter.INSTANCE.createInputStream(uri)) {
+			return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+		}
 	}
-
-	public Class<? extends DocumentSymbolMapper.DocumentSymbolNameProvider> bindDocumentSymbolNameProvider() {
-		return AadlSymbolNameProvider.class;
-	}
-
-	public Class<? extends HoverService> bindHoverService() {
-		return AadlHoverService.class;
-	}
-
-	public Class<? extends ILanguageServerExtension> bindILanguageServerExtension() {
-		return AadlLanguageServerExtension.class;
-	}
-
 }
