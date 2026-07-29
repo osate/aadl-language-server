@@ -24,12 +24,16 @@
 package org.osate.aadl.ls.tests.lsp;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class Emv2ParsingTest extends AbstractAadlLanguageServerTest {
@@ -62,5 +66,41 @@ public class Emv2ParsingTest extends AbstractAadlLanguageServerTest {
 		boolean hasError = forFile.stream()
 				.anyMatch(d -> d.getSeverity() == DiagnosticSeverity.Error);
 		assertFalse("Expected EMV2 annex to parse without errors, got: " + forFile, hasError);
+	}
+
+	@Test
+	public void errorTypeDefinitionInsideEmv2Annex() {
+		testDefinition(configuration -> {
+			configuration.setFilePath("emv2-definition.aadl");
+			configuration.setModel("""
+					package error_types
+					public
+					    annex EMV2 {**
+					        error types
+					            ServiceError: type;
+					        end types;
+					    **};
+
+					    abstract A
+					        features
+					            f: feature;
+					        annex EMV2 {**
+					            use types error_types;
+					            error propagations
+					                f: in propagation {ServiceError};
+					            end propagations;
+					        **};
+					    end A;
+					end error_types;
+					""");
+			configuration.setLine(14);
+			configuration.setColumn(37);
+			configuration.setAssertDefinitions(definitions -> {
+				Assert.assertEquals(1, definitions.size());
+				var definition = definitions.get(0);
+				assertTrue(definition.getUri().endsWith("/emv2-definition.aadl"));
+				Assert.assertEquals(new Range(new Position(4, 12), new Position(4, 24)), definition.getRange());
+			});
+		});
 	}
 }
