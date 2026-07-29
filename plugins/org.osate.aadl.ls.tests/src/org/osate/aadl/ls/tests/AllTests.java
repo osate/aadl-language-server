@@ -37,6 +37,7 @@ import org.osate.aadl.ls.tests.lsp.PredeclaredPropertyDefinitionLspTest;
 import org.osate.aadl.ls.tests.unit.Aadl2LsGlobalScopeProviderTest;
 import org.osate.aadl.ls.tests.unit.Aadl2LsProjectDescriptionFactoryTest;
 import org.osate.aadl.ls.tests.unit.AadlSymbolNameProviderTest;
+import org.osate.aadl.ls.tests.unit.AadlUriExtensionsTest;
 import org.osate.aadl.ls.tests.unit.CommandServiceInitializeTest;
 import org.osate.aadl.ls.tests.unit.ContributedAadlContentServiceTest;
 
@@ -48,6 +49,7 @@ import org.osate.aadl.ls.tests.unit.ContributedAadlContentServiceTest;
 		AadlSymbolNameProviderTest.class,
 		Aadl2LsGlobalScopeProviderTest.class,
 		ContributedAadlContentServiceTest.class,
+		AadlUriExtensionsTest.class,
 		DiagnosticsSmokeTest.class,
 		DocumentSymbolLspTest.class,
 		PredeclaredPropertyDefinitionLspTest.class,

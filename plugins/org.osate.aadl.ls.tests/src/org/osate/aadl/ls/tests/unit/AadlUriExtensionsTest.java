@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file). 
+ * Copyright (c) 2004-2026 Carnegie Mellon University and others. (see Contributors file).
  * All Rights Reserved.
  *
  * NO WARRANTY. ALL MATERIAL IS FURNISHED ON AN "AS-IS" BASIS. CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY
@@ -18,46 +18,48 @@
  * configuration. By using this program, You agree to comply with any and all relevant Third Party Software terms and
  * conditions contained in any such Third Party Software or separate license file distributed with such Third Party
  * Software. The parties who own the Third Party Software ("Third Party Licensors") are intended third party beneficiaries
- * to this license with respect to the terms applicable to their Third Party Software. Third Party Software licenses
+ * to this license with respect to the terms applicable to the Third Party Software. Third Party Software licenses
  * only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  *******************************************************************************/
-package org.osate.aadl.ls.setup;
+package org.osate.aadl.ls.tests.unit;
 
-import org.eclipse.xtext.ide.server.ILanguageServerExtension;
-import org.eclipse.xtext.ide.server.UriExtensions;
-import org.eclipse.xtext.ide.server.commands.IExecutableCommandService;
-import org.eclipse.xtext.ide.server.hover.HoverService;
-import org.eclipse.xtext.ide.server.symbol.DocumentSymbolMapper;
-import org.osate.aadl.ls.commands.CommandService;
-import org.osate.aadl.ls.services.AadlHoverService;
-import org.osate.aadl.ls.services.AadlLanguageServerExtension;
-import org.osate.aadl.ls.services.AadlSymbolNameProvider;
+import static org.junit.Assert.assertEquals;
+
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.plugin.EcorePlugin;
+import org.eclipse.emf.ecore.resource.URIConverter;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.osate.aadl.ls.services.AadlUriExtensions;
-import org.osate.xtext.aadl2.ide.AbstractAadl2IdeModule;
+import org.osate.pluginsupport.PluginSupportUtil;
 
-/**
- * Use this class to register ide components.
- */
-public class Aadl2LsIdeModule extends AbstractAadl2IdeModule {
+public class AadlUriExtensionsTest {
 
-	public Class<? extends IExecutableCommandService> bindIExecutableCommandService() {
-		return CommandService.class;
+	@BeforeClass
+	public static void discoverPluginContributions() {
+		EcorePlugin.ExtensionProcessor.process(null);
 	}
 
-	public Class<? extends DocumentSymbolMapper.DocumentSymbolNameProvider> bindDocumentSymbolNameProvider() {
-		return AadlSymbolNameProvider.class;
+	@Test
+	public void serializesPhysicalContributedUriAsPlatformUri() {
+		var logicalUri = timingPropertiesUri();
+		var physicalUri = URIConverter.INSTANCE.normalize(logicalUri);
+
+		assertEquals(logicalUri.toString(), new AadlUriExtensions().toUriString(physicalUri));
 	}
 
-	public Class<? extends HoverService> bindHoverService() {
-		return AadlHoverService.class;
+	@Test
+	public void leavesUnrelatedUriUnchanged() {
+		var uri = URI.createURI("jar:file:/tmp/example.jar!/example.aadl");
+
+		assertEquals(uri.toString(), new AadlUriExtensions().toUriString(uri));
 	}
 
-	public Class<? extends UriExtensions> bindUriExtensions() {
-		return AadlUriExtensions.class;
+	private static URI timingPropertiesUri() {
+		return PluginSupportUtil.getContributedAadl()
+				.stream()
+				.filter(uri -> "Timing_Properties.aadl".equals(uri.lastSegment()))
+				.findFirst()
+				.orElseThrow();
 	}
-
-	public Class<? extends ILanguageServerExtension> bindILanguageServerExtension() {
-		return AadlLanguageServerExtension.class;
-	}
-
 }
