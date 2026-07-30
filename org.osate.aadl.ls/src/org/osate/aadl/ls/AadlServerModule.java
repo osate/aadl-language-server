@@ -52,7 +52,8 @@ public class AadlServerModule extends ServerModule {
 	protected void configure() {
 		binder().bind(ExecutorService.class).toProvider(ExecutorServiceProvider.class);
 
-		bind(LanguageServer.class).to(LanguageServerImpl.class);
+		bind(LanguageServer.class).to(AadlLanguageServer.class);
+		bind(LanguageServerImpl.class).to(AadlLanguageServer.class);
 		bind(IResourceServiceProvider.Registry.class).toProvider(Aadl2LsResourceServiceProviderRegistry.class);
 		bind(IMultiRootWorkspaceConfigFactory.class).to(MultiRootWorkspaceConfigFactory.class);
 		bind(IProjectDescriptionFactory.class).to(Aadl2LsProjectDescriptionFactory.class);
