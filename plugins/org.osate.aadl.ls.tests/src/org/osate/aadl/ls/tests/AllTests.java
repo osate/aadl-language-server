@@ -29,6 +29,7 @@ import org.osate.aadl.ls.commands.CommandUtilTest;
 import org.osate.aadl.ls.tests.lsp.BehaviorAnnexParsingTest;
 import org.osate.aadl.ls.tests.lsp.CommandServiceBusLoadTest;
 import org.osate.aadl.ls.tests.lsp.CommandServiceInstantiateTest;
+import org.osate.aadl.ls.tests.lsp.CommandServiceLatencyTest;
 import org.osate.aadl.ls.tests.lsp.CommandServiceReachabilityTest;
 import org.osate.aadl.ls.tests.lsp.DiagnosticsSmokeTest;
 import org.osate.aadl.ls.tests.lsp.DocumentSymbolLspTest;
@@ -56,6 +57,7 @@ import org.osate.aadl.ls.tests.unit.ContributedAadlContentServiceTest;
 		DocumentSymbolLspTest.class,
 		PredeclaredPropertyDefinitionLspTest.class,
 		CommandServiceBusLoadTest.class,
+		CommandServiceLatencyTest.class,
 		CommandServiceReachabilityTest.class,
 		CommandServiceInstantiateTest.class,
 		MultiRootLinkingTest.class,

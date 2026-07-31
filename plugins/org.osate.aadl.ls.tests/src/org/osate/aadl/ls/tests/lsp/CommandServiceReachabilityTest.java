@@ -25,10 +25,8 @@ package org.osate.aadl.ls.tests.lsp;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
@@ -36,6 +34,7 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.junit.Assert;
 import org.junit.Test;
+import org.osate.aadl.ls.commands.AnalysisCommandResult;
 
 import com.google.gson.JsonPrimitive;
 
@@ -125,14 +124,11 @@ public class CommandServiceReachabilityTest extends AbstractAadlLanguageServerTe
 		defaultsParams.setArguments(List.of(new JsonPrimitive(instanceFile.toUri().toString())));
 
 		Object defaultsResult = languageServer.getWorkspaceService().executeCommand(defaultsParams).get();
-		Assert.assertTrue("expected string result, got: " + defaultsResult, defaultsResult instanceof String);
-		var defaultsLines = nonEmptyLines((String) defaultsResult);
-		Assert.assertFalse("expected output: " + defaultsResult, defaultsLines.isEmpty());
-		Assert.assertTrue("expected reachability header, got: " + defaultsLines.get(0),
-				defaultsLines.get(0).startsWith("Ran mode reachability analysis of "));
-		Assert.assertTrue("default command should not emit report paths: " + defaultsLines,
-				reportLines(defaultsLines).isEmpty());
-		assertDiagnostics(defaultsLines.subList(1, defaultsLines.size()));
+		Assert.assertTrue("expected structured result, got: " + defaultsResult,
+				defaultsResult instanceof AnalysisCommandResult);
+		var defaults = (AnalysisCommandResult) defaultsResult;
+		Assert.assertTrue("default command should not emit reports: " + defaults, defaults.reports().isEmpty());
+		assertDiagnostics(defaults);
 
 		ExecuteCommandParams reportParams = new ExecuteCommandParams();
 		reportParams.setCommand("aadl.analyze.reachability");
@@ -140,21 +136,19 @@ public class CommandServiceReachabilityTest extends AbstractAadlLanguageServerTe
 				new JsonPrimitive(true), new JsonPrimitive(true), new JsonPrimitive(true)));
 
 		Object reportResult = languageServer.getWorkspaceService().executeCommand(reportParams).get();
-		Assert.assertTrue("expected string result, got: " + reportResult, reportResult instanceof String);
-		var reportOutputLines = nonEmptyLines((String) reportResult);
-		var reports = reportLines(reportOutputLines);
-		Assert.assertEquals("expected html, dot, and smv report paths: " + reportResult, 3, reports.size());
-		Assert.assertTrue("expected html report: " + reports, reports.stream().anyMatch(l -> l.endsWith(".html")));
-		Assert.assertTrue("expected dot report: " + reports, reports.stream().anyMatch(l -> l.endsWith(".dot")));
-		Assert.assertTrue("expected smv report: " + reports, reports.stream().anyMatch(l -> l.endsWith(".smv")));
+		Assert.assertTrue("expected structured result, got: " + reportResult,
+				reportResult instanceof AnalysisCommandResult);
+		var reportOutput = (AnalysisCommandResult) reportResult;
+		var reports = reportOutput.reports();
+		Assert.assertEquals("expected html, dot, and smv report URIs: " + reportResult, 3, reports.size());
+		Assert.assertTrue("expected html report: " + reports, reports.stream().anyMatch(r -> r.kind().equals("html")));
+		Assert.assertTrue("expected dot report: " + reports, reports.stream().anyMatch(r -> r.kind().equals("dot")));
+		Assert.assertTrue("expected smv report: " + reports, reports.stream().anyMatch(r -> r.kind().equals("smv")));
 		for (var report : reports) {
-			Assert.assertTrue("expected report file on disk: " + report, Files.isRegularFile(Path.of(report)));
+			Assert.assertTrue("expected report file on disk: " + report,
+					Files.isRegularFile(Path.of(java.net.URI.create(report.uri()))));
 		}
-		var diagLines = reportOutputLines.stream()
-				.filter(l -> !l.startsWith("Ran mode reachability analysis of "))
-				.filter(l -> !reports.contains(l))
-				.toList();
-		assertDiagnostics(diagLines);
+		assertDiagnostics(reportOutput);
 	}
 
 	private static Path findInstanceFile(Path root) throws Exception {
@@ -166,29 +160,9 @@ public class CommandServiceReachabilityTest extends AbstractAadlLanguageServerTe
 		}
 	}
 
-	private static List<String> nonEmptyLines(String s) {
-		var out = new ArrayList<String>();
-		for (var line : s.split("\\R")) {
-			if (!line.isEmpty()) {
-				out.add(line);
-			}
-		}
-		return out;
-	}
-
-	private static List<String> reportLines(List<String> lines) {
-		return lines.stream()
-				.filter(l -> l.endsWith(".html") || l.endsWith(".dot") || l.endsWith(".smv"))
-				.toList();
-	}
-
-	private static void assertDiagnostics(List<String> diagLines) {
-		var diagPattern = Pattern.compile("^.+\\.aaxl2:[^:]+: (error|warning|info|hint): .+$");
-		Assert.assertFalse("expected reachability diagnostics", diagLines.isEmpty());
-		for (var line : diagLines) {
-			Assert.assertTrue("unexpected diagnostic line: " + line, diagPattern.matcher(line).matches());
-		}
-		Assert.assertTrue("expected unreachable SOM diagnostic, got: " + diagLines,
-				diagLines.stream().anyMatch(l -> l.contains("is not reachable")));
+	private static void assertDiagnostics(AnalysisCommandResult result) {
+		Assert.assertFalse("expected reachability diagnostics", result.diagnostics().isEmpty());
+		Assert.assertTrue("expected unreachable SOM diagnostic, got: " + result.diagnostics(),
+				result.diagnostics().stream().anyMatch(d -> d.message().contains("is not reachable")));
 	}
 }

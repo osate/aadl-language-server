@@ -25,10 +25,8 @@ package org.osate.aadl.ls.tests.lsp;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
@@ -36,6 +34,7 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.junit.Assert;
 import org.junit.Test;
+import org.osate.aadl.ls.commands.AnalysisCommandResult;
 
 import com.google.gson.JsonPrimitive;
 
@@ -153,24 +152,21 @@ public class CommandServiceBusLoadTest extends AbstractAadlLanguageServerTest {
 		CompletableFuture<Object> busLoadFuture = languageServer.getWorkspaceService().executeCommand(busLoadParams);
 		Object busLoadResult = busLoadFuture.get();
 
-		Assert.assertTrue("expected string result, got: " + busLoadResult, busLoadResult instanceof String);
-		var lines = nonEmptyLines((String) busLoadResult);
-		Assert.assertTrue("expected header and csv path, got: " + busLoadResult, lines.size() >= 2);
-		Assert.assertTrue("expected bus-load header, got: " + lines.get(0),
-				lines.get(0).startsWith("Ran bus load analysis of "));
-		Assert.assertTrue("expected BusLoad csv path, got: " + lines.get(1), lines.get(1).endsWith("__BusLoad.csv"));
-		Assert.assertTrue("expected csv file on disk: " + lines.get(1), Files.isRegularFile(Path.of(lines.get(1))));
-
-		var diagPattern = Pattern.compile("^.+\\.aaxl2:[^:]+: (error|warning|info|hint): .+$");
-		var diagLines = lines.subList(2, lines.size());
-		Assert.assertFalse("expected bus-load diagnostics", diagLines.isEmpty());
-		for (var line : diagLines) {
-			Assert.assertTrue("unexpected diagnostic line: " + line, diagPattern.matcher(line).matches());
-		}
-		Assert.assertTrue("expected missing-budget warning, got: " + diagLines,
-				diagLines.stream().anyMatch(l -> l.contains("has no bandwidth budget")));
-		Assert.assertTrue("expected over-budget error, got: " + diagLines,
-				diagLines.stream().anyMatch(l -> l.contains("Actual bandwidth > budget")));
+		Assert.assertTrue("expected structured result, got: " + busLoadResult,
+				busLoadResult instanceof AnalysisCommandResult);
+		var result = (AnalysisCommandResult) busLoadResult;
+		Assert.assertEquals("error", result.status());
+		Assert.assertEquals(1, result.reports().size());
+		var report = result.reports().get(0);
+		Assert.assertEquals("csv", report.kind());
+		Assert.assertTrue(report.uri().endsWith("__BusLoad.csv"));
+		Assert.assertTrue("expected csv file on disk: " + report.uri(),
+				Files.isRegularFile(Path.of(java.net.URI.create(report.uri()))));
+		Assert.assertFalse("expected bus-load diagnostics", result.diagnostics().isEmpty());
+		Assert.assertTrue("expected missing-budget warning, got: " + result.diagnostics(),
+				result.diagnostics().stream().anyMatch(d -> d.message().contains("has no bandwidth budget")));
+		Assert.assertTrue("expected over-budget error, got: " + result.diagnostics(),
+				result.diagnostics().stream().anyMatch(d -> d.message().contains("Actual bandwidth > budget")));
 	}
 
 	private static Path findInstanceFile(Path root) throws Exception {
@@ -182,13 +178,4 @@ public class CommandServiceBusLoadTest extends AbstractAadlLanguageServerTest {
 		}
 	}
 
-	private static List<String> nonEmptyLines(String s) {
-		var out = new ArrayList<String>();
-		for (var line : s.split("\\R")) {
-			if (!line.isEmpty()) {
-				out.add(line);
-			}
-		}
-		return out;
-	}
 }

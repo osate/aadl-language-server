@@ -24,8 +24,9 @@
 package org.osate.aadl.ls.commands;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.emf.common.util.URI;
@@ -35,10 +36,8 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.osate.aadl2.instance.SystemInstance;
+import org.osate.aadl.ls.commands.AnalysisCommandResult.Report;
 import org.osate.analysis.resource.budgets.busload.NewBusLoadAnalysis;
-
-import com.google.common.collect.Iterables;
-import com.google.gson.JsonPrimitive;
 
 final class AnalyzeBusLoadCommand implements Command {
 
@@ -54,16 +53,11 @@ final class AnalyzeBusLoadCommand implements Command {
 
 	@Override
 	public Object execute(ExecuteCommandParams params, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-		var arg1 = (JsonPrimitive) Iterables.getFirst(params.getArguments(), null);
-		String iuri = arg1.getAsString();
-		if (iuri == null) {
-			return "Param Uri Missing";
-		}
-
-		var uri = URI.createURI(iuri);
+		var uri = CommandUtil.requiredFileUri(params);
+		var iuri = uri.toString();
 		Resource res = new ResourceSetImpl().getResource(uri, true);
 		if (res.getContents().isEmpty() || !(res.getContents().get(0) instanceof SystemInstance instance)) {
-			return "Error: " + iuri + " does not contain a system instance";
+			throw CommandUtil.requestFailed(iuri + " does not contain a system instance");
 		}
 		var componentImplementation = instance.getComponentImplementation();
 		var duri = componentImplementation == null || componentImplementation.eResource() == null
@@ -71,25 +65,23 @@ final class AnalyzeBusLoadCommand implements Command {
 				: componentImplementation.eResource().getURI();
 		try {
 			return access.doRead(duri.toString(), ctx -> runAnalysis(uri, iuri)).get();
-		} catch (InterruptedException | ExecutionException e) {
-			return e.getMessage();
+		} catch (InterruptedException e) {
+			throw CommandUtil.interrupted("Bus load analysis");
+		} catch (ExecutionException e) {
+			throw CommandUtil.executionFailed("Bus load analysis", e.getCause());
 		}
 	}
 
-	private static String runAnalysis(URI uri, String iuri) {
-		var output = new StringBuilder();
-		output.append("Ran bus load analysis of ").append(iuri).append('\n');
-
+	private static AnalysisCommandResult runAnalysis(URI uri, String iuri) {
 		var resource = new ResourceSetImpl().getResource(uri, true);
 		if (resource.getContents().isEmpty() || !(resource.getContents().get(0) instanceof SystemInstance inst)) {
-			return "Error: " + iuri + " does not contain a system instance";
+			throw CommandUtil.requestFailed(iuri + " does not contain a system instance");
 		}
 
 		try {
 			createReportDirectory(uri);
 		} catch (IOException e) {
-			output.append("Exception: ").append(e.getMessage());
-			return output.toString();
+			throw new UncheckedIOException(e);
 		}
 
 		var analysisResult = new NewBusLoadAnalysis().invoke(null, inst);
@@ -97,19 +89,20 @@ final class AnalyzeBusLoadCommand implements Command {
 				.appendSegment(REPORTS_DIR)
 				.appendSegment(ANALYSIS_DIR)
 				.appendSegment(uri.trimFileExtension().lastSegment() + REPORT_NAME_TAIL);
-		output.append(CommandUtil.toFsPath(csvURI)).append('\n');
-
-		if (analysisResult != null) {
-			var instancePath = CommandUtil.toFsPath(inst.eResource().getURI());
-			CommandUtil.appendInstanceDiagnostics(output, analysisResult, instancePath);
+		if (analysisResult == null) {
+			throw CommandUtil.requestFailed("Bus load analysis did not return a result");
 		}
-		return output.toString();
+		if (!inst.eResource().getResourceSet().getURIConverter().exists(csvURI, null)) {
+			throw CommandUtil.requestFailed("Bus load analysis did not write its CSV report");
+		}
+		return CommandUtil.result(analysisResult, "Bus load analysis completed", iuri,
+				List.of(new Report("csv", csvURI.toString())));
 	}
 
 	private static void createReportDirectory(URI instanceURI) throws IOException {
 		var reportURI = instanceURI.trimSegments(1).appendSegment(REPORTS_DIR).appendSegment(ANALYSIS_DIR);
 		if (reportURI.isFile()) {
-			Files.createDirectories(Path.of(CommandUtil.toFsPath(reportURI)));
+			Files.createDirectories(CommandUtil.toPath(reportURI));
 		}
 	}
 }

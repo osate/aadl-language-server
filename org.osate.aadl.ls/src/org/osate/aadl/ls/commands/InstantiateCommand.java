@@ -97,7 +97,7 @@ final class InstantiateCommand implements Command {
 					e = e.getOwner();
 				}
 				var io = (InstanceObject) e;
-				diagLines.add(CommandUtil.formatInstanceDiagnostic(CommandUtil.toFsPath(si.eResource().getURI()),
+				diagLines.add(CommandUtil.formatInstanceDiagnostic(CommandUtil.toPath(si.eResource().getURI()).toString(),
 						io.getComponentInstancePath(), d.kind, d.message));
 			}
 			CommandUtil.appendSortedDiagnosticLines(result, diagLines);

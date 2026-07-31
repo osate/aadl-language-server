@@ -23,6 +23,7 @@
  *******************************************************************************/
 package org.osate.aadl.ls.commands;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.emf.common.util.URI;
@@ -32,14 +33,12 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.osate.aadl2.instance.SystemInstance;
+import org.osate.aadl.ls.commands.AnalysisCommandResult.Report;
 import org.osate.analysis.modes.reachability.ReachabilityAnalyzer;
 import org.osate.analysis.modes.reachability.ReachabilityConfiguration;
 import org.osate.result.AnalysisResult;
 import org.osate.result.ResultType;
 import org.osate.result.StringValue;
-
-import com.google.common.collect.Iterables;
-import com.google.gson.JsonPrimitive;
 
 final class AnalyzeReachabilityCommand implements Command {
 
@@ -52,20 +51,16 @@ final class AnalyzeReachabilityCommand implements Command {
 
 	@Override
 	public Object execute(ExecuteCommandParams params, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
-		var arg1 = (JsonPrimitive) Iterables.getFirst(params.getArguments(), null);
-		String iuri = arg1 == null ? null : arg1.getAsString();
-		if (iuri == null) {
-			return "Param Uri Missing";
-		}
+		var uri = CommandUtil.requiredFileUri(params);
+		var iuri = uri.toString();
 		var args = params.getArguments();
 		boolean generateDot = CommandUtil.optBool(args, 1, false);
 		boolean generateHtml = CommandUtil.optBool(args, 2, false);
 		boolean generateSmv = CommandUtil.optBool(args, 3, false);
 
-		var uri = URI.createURI(iuri);
 		Resource res = new ResourceSetImpl().getResource(uri, true);
 		if (res.getContents().isEmpty() || !(res.getContents().get(0) instanceof SystemInstance instance)) {
-			return "Error: " + iuri + " does not contain a system instance";
+			throw CommandUtil.requestFailed(iuri + " does not contain a system instance");
 		}
 		var componentImplementation = instance.getComponentImplementation();
 		var duri = componentImplementation == null || componentImplementation.eResource() == null
@@ -74,27 +69,23 @@ final class AnalyzeReachabilityCommand implements Command {
 		try {
 			return access.doRead(duri.toString(), ctx -> runAnalysis(uri, iuri, generateDot, generateHtml, generateSmv))
 					.get();
-		} catch (InterruptedException | ExecutionException e) {
-			return e.getMessage();
+		} catch (InterruptedException e) {
+			throw CommandUtil.interrupted("Mode reachability analysis");
+		} catch (ExecutionException e) {
+			throw CommandUtil.executionFailed("Mode reachability analysis", e.getCause());
 		}
 	}
 
-	private static String runAnalysis(URI uri, String iuri, boolean generateDot, boolean generateHtml,
+	private static AnalysisCommandResult runAnalysis(URI uri, String iuri, boolean generateDot, boolean generateHtml,
 			boolean generateSmv) {
-		var output = new StringBuilder();
-		output.append("Ran mode reachability analysis of ").append(iuri).append('\n');
-
 		var resource = new ResourceSetImpl().getResource(uri, true);
 		if (resource.getContents().isEmpty() || !(resource.getContents().get(0) instanceof SystemInstance inst)) {
-			return "Error: " + iuri + " does not contain a system instance";
+			throw CommandUtil.requestFailed(iuri + " does not contain a system instance");
 		}
 
 		var analysisResult = analyze(inst, generateDot, generateHtml, generateSmv);
-		appendReportPaths(output, analysisResult);
-
-		var instancePath = CommandUtil.toFsPath(inst.eResource().getURI());
-		CommandUtil.appendInstanceDiagnostics(output, analysisResult, instancePath);
-		return output.toString();
+		return CommandUtil.result(analysisResult, "Mode reachability analysis completed", iuri,
+				reportUris(analysisResult));
 	}
 
 	private static AnalysisResult analyze(SystemInstance inst, boolean generateDot, boolean generateHtml,
@@ -113,29 +104,33 @@ final class AnalyzeReachabilityCommand implements Command {
 		var analyzer = new ReachabilityAnalyzer(config, inst);
 		var result = analyzer.analyzeModel();
 		if (result.getResultType() == ResultType.SUCCESS && (generateDot || generateHtml || generateSmv)) {
-			analyzer.writeReports();
+			var status = analyzer.writeReports();
+			if (!status.isOK()) {
+				throw CommandUtil.requestFailed(status.getMessage());
+			}
 		}
 		return result;
 	}
 
-	private static void appendReportPaths(StringBuilder output, AnalysisResult result) {
+	private static ArrayList<Report> reportUris(AnalysisResult result) {
+		var reports = new ArrayList<Report>();
 		for (var r : result.getResults()) {
 			if (isReportUriResult(r.getMessage())) {
 				for (var v : r.getValues()) {
 					if (v instanceof StringValue sv) {
-						output.append(toReportPath(sv.getValue())).append('\n');
+						reports.add(new Report(reportKind(r.getMessage()), sv.getValue()));
 					}
 				}
 			}
 		}
+		return reports;
 	}
 
 	private static boolean isReportUriResult(String message) {
 		return "DOT file URI".equals(message) || "HTML file URI".equals(message) || "SMV file URI".equals(message);
 	}
 
-	private static String toReportPath(String uriText) {
-		var uri = URI.createURI(uriText);
-		return uri.isFile() ? CommandUtil.toFsPath(uri) : uriText;
+	private static String reportKind(String message) {
+		return message.substring(0, message.indexOf(' ')).toLowerCase();
 	}
 }

@@ -23,52 +23,22 @@
  *******************************************************************************/
 package org.osate.aadl.ls.commands;
 
-import java.nio.file.Path;
 import java.util.List;
 
-import org.eclipse.emf.common.util.URI;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
-import org.osate.result.util.ResultUtil;
+/**
+ * Stable JSON shape returned by analysis execute-command requests.
+ */
+public record AnalysisCommandResult(String status, String summary, List<Report> reports,
+		List<AnalysisDiagnostic> diagnostics) {
 
-public class CommandUtilTest {
-
-	@Test
-	public void instanceDiagnosticsAreSingleLineAndSorted() {
-		var analysisResult = ResultUtil.createAnalysisResult("test", null);
-		analysisResult.getDiagnostics().add(ResultUtil.createWarningDiagnostic("first\r\nsecond", null));
-		var result = CommandUtil.result(analysisResult, "completed", "file:///instance.aaxl2", List.of());
-		Assert.assertEquals("warning", result.status());
-		Assert.assertEquals("first  second", result.summary());
-		Assert.assertEquals("first  second", result.diagnostics().get(0).message());
+	public AnalysisCommandResult {
+		reports = List.copyOf(reports);
+		diagnostics = List.copyOf(diagnostics);
 	}
 
-	@Test
-	public void convertsFileUriWithEscapedCharacters() {
-		var expected = Path.of(System.getProperty("java.io.tmpdir"), "AADL reports", "mödel.aaxl2").toAbsolutePath();
-		var uri = URI.createURI(expected.toUri().toString());
-		Assert.assertEquals(expected, CommandUtil.toPath(uri));
+	public record Report(String kind, String uri) {
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void rejectsNonFileUri() {
-		CommandUtil.toPath(URI.createURI("platform:/plugin/example/model.aadl"));
-	}
-
-	@Test
-	public void convertsStandardAndEncodedWindowsDriveUris() {
-		Assume.assumeTrue(System.getProperty("os.name").toLowerCase().contains("win"));
-		Assert.assertEquals(Path.of("C:\\Users\\test\\model.aaxl2"),
-				CommandUtil.toPath(URI.createURI("file:///C:/Users/test/model.aaxl2")));
-		Assert.assertEquals(Path.of("c:\\Users\\test\\model.aaxl2"),
-				CommandUtil.toPath(URI.createURI("file:///c%3A/Users/test/model.aaxl2")));
-	}
-
-	@Test
-	public void convertsWindowsUncUri() {
-		Assume.assumeTrue(System.getProperty("os.name").toLowerCase().contains("win"));
-		Assert.assertEquals(Path.of("\\\\server\\share\\model.aaxl2"),
-				CommandUtil.toPath(URI.createURI("file://server/share/model.aaxl2")));
+	public record AnalysisDiagnostic(String severity, String uri, String elementPath, String message) {
 	}
 }
