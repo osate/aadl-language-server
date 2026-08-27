@@ -62,6 +62,8 @@ mvn \
 
 echo "Building language server"
 
+mvn help:evaluate -Dexpression=maven.multiModuleProjectDirectory -q -DforceStdout
+
 mvn \
 	-f "${repo_root}/pom.xml" \
 	-Dtycho.localArtifacts=ignore \
