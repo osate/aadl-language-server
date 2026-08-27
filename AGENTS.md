@@ -42,7 +42,6 @@ The project follows Eclipse plugin architecture with Maven/Tycho build:
 - **osate2/** - Pinned `osate/osate2` Git submodule and source of the parent POM,
   target platform, bundles, and generated OSATE p2 repository
 - **scripts/build-test-release** - Reproducible two-phase OSATE and language-server build
-- **.github/workflows/test-release.yml** - Manual and `test-*` tag test-release workflow
 
 ## Dependency on OSATE
 
