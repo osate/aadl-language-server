@@ -97,3 +97,15 @@ Test-release artifacts must retain:
 - the build timestamp.
 
 The build script rejects a dirty or mismatched OSATE submodule.
+
+## Supported language server commands
+
+The server advertises these commands through LSP `workspace/executeCommand`:
+
+- `aadl.instantiate` — Instantiate an AADL component implementation and write
+  the resulting `.aaxl2` instance model.
+- `aadl.analyze.latency` — Run flow latency analysis on an instance model.
+- `aadl.analyze.busLoad` — Run bus load analysis on an instance model and
+  generate its CSV report.
+- `aadl.analyze.reachability` — Run SOM mode reachability analysis on an
+  instance model, with optional DOT, HTML, and SMV reports.
