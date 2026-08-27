@@ -4,7 +4,10 @@ This file provides guidance to AI agents when working with code in this reposito
 
 ## Overview
 
-This is the AADL Language Server based on OSATE 2.19.0, implementing the Language Server Protocol (LSP) for the Architecture Analysis & Design Language (AADL). It provides language services for VSCode and other LSP-compatible editors.
+This is the standalone AADL Language Server repository, implementing the
+Language Server Protocol (LSP) for the Architecture Analysis & Design Language
+(AADL). It provides language services for VS Code and other LSP-compatible
+editors. The current build is pinned to OSATE 2.19.0 through a Git submodule.
 
 **Technology Stack**: Java 21, Maven/Tycho, Xtext, Eclipse LSP4J, Google Guice
 
@@ -36,6 +39,10 @@ The project follows Eclipse plugin architecture with Maven/Tycho build:
 - **plugins/org.osate.aadl.ls.tests/** - JUnit test fragment of `org.osate.aadl.ls`
 - **releng/org.osate.aadl.ls.repository/** - Eclipse p2 repository packaging
 - **releng/aadl.ls.releng/** - Build configuration and launch files
+- **osate2/** - Pinned `osate/osate2` Git submodule and source of the parent POM,
+  target platform, bundles, and generated OSATE p2 repository
+- **scripts/build-test-release** - Reproducible two-phase OSATE and language-server build
+- **.github/workflows/test-release.yml** - Manual and `test-*` tag test-release workflow
 
 ## Dependency on OSATE
 
@@ -51,11 +58,28 @@ git submodule update --init osate2
 
 Do not configure a Git reference repository for the submodule.
 
+Treat the submodule as a separate repository:
+
+- For ordinary language-server work, do not modify or advance `osate2/`.
+- Before making an explicitly requested OSATE change, read `osate2/AGENTS.md`.
+- Commit OSATE source changes in the OSATE repository, not in this repository.
+  This repository records only the resulting OSATE commit through its gitlink.
+- A dirty or mismatched submodule is a release-build failure.
+- When updating the gitlink, use an exact reviewed commit. If its OSATE parent
+  version differs, update the root `pom.xml` parent version in the same change.
+
 ## Building
 
 **You cannot build individual modules of the language server.** The Tycho build
 resolves the whole reactor together — always build from the aggregator root, not
 from a single module directory.
+
+### Prerequisites
+
+- Git with the `osate2/` submodule initialized
+- JDK 21+
+- Maven 3.9+
+- Network and Maven/p2 cache access for a clean online build
 
 ### Complete test-release build
 
@@ -67,11 +91,22 @@ Build OSATE first and then build the language server:
 
 This is intentionally a two-phase build. The language-server Tycho reactor
 cannot resolve the OSATE p2 repository until the OSATE reactor has finished
-creating it.
+creating it. The script:
+
+1. verifies that `osate2/` is clean and matches the committed gitlink;
+2. runs the complete OSATE reactor, including tests and p2/product assembly;
+3. runs the language-server reactor with `clean verify`;
+4. rejects unexpected duplicate bundle versions, allowing only the required
+   two `org.antlr.runtime` versions; and
+5. writes `target/build-provenance.properties`.
+
+Do not claim the test-release build passed until both Maven invocations finish
+successfully.
 
 ### Language-server-only rebuild
 
-Run the Maven launch configuration `aadl.ls.releng.launch` or execute:
+The OSATE p2 repository must already exist under the submodule. Run the Maven
+launch configuration `aadl.ls.releng.launch` or execute:
 
 ```bash
 mvn clean verify -Dtycho.localArtifacts=ignore
@@ -84,12 +119,21 @@ The build produces a p2 repository with all required plugin JARs in:
 `${maven.multiModuleProjectDirectory}` to this repository root so `pom.xml`
 resolves the generated OSATE p2 repository under `osate2/`. Do not delete it.
 
-### Prerequisites
+### Test validation
 
-- OSATE development environment (see osate.org)
-- Import the setup file: `aadl-ls.setup`
-- Java 21+
-- Maven with Tycho support
+- Use `verify`, not only `test`; Tycho may compile tests without executing them
+  during the `test` lifecycle.
+- The test bundle intentionally selects `org.osate.aadl.ls.tests.AllTests` so
+  each test runs once.
+- Inspect
+  `plugins/org.osate.aadl.ls.tests/target/surefire-reports/TEST-org.osate.aadl.ls.tests.AllTests.xml`
+  and require a nonzero `tests` count with zero failures and errors.
+- Platform-specific tests may be skipped on unsupported operating systems;
+  report those skips explicitly.
+- Linux CI runs the complete build under `xvfb-run` because OSATE contains
+  Eclipse test infrastructure that may require a display.
+- If the user explicitly requests offline Maven validation, add `-o` to the
+  applicable Maven invocations and do not silently fall back to network access.
 
 ## Running and Testing
 
@@ -105,6 +149,10 @@ Two launch configurations are available in `org.osate.aadl.ls/.launch/`:
    - Main class: `org.osate.aadl.ls.Aadl2ServerLauncher`
    - Args: `-host localhost -port 6215 -trace`
    - Useful for debugging the socket transport with an external LSP client
+
+There is no repository-level Oomph setup file. Import the language-server
+projects and the required OSATE projects from the initialized submodule into a
+Java 21 Eclipse/OSATE development workspace.
 
 ### Debug Mode
 
@@ -188,6 +236,11 @@ To add a new command (e.g., for analysis):
 
 **Note**: OSATE analyses may need modification to work without Eclipse workbench (e.g., use EMF `UriConverter` instead of Eclipse `IFile` for file I/O).
 
+Add or update tests in `plugins/org.osate.aadl.ls.tests/` for every changed
+server behavior. Prefer LSP-level coverage for protocol-visible behavior and
+unit tests for isolated helpers. Store AADL fixtures under the test bundle's
+`test-models/` tree rather than embedding substantial models in Java strings.
+
 ## Dependency Injection Customization
 
 Xtext services are customized via Guice in `Aadl2LsIdeModule`:
@@ -207,12 +260,33 @@ Runtime bindings in `Aadl2LsRuntimeModule`:
 - **MANIFEST.MF** files - Define OSGi bundle dependencies
 - **pom.xml** files - Maven/Tycho build configuration
 - **build.properties** - Defines files to include in plugin JARs
+- **.gitmodules** - Defines the public OSATE submodule URL
+- **scripts/build-test-release** - Defines the authoritative test-release build and checks
+- **target/build-provenance.properties** - Generated record of language-server and OSATE revisions
+
+## Change and Commit Hygiene
+
+- Preserve the full repository-standard copyright and license headers.
+- Keep changes to the language server, OSATE gitlink, and release tooling
+  independently reviewable when practical.
+- Before committing, run `git diff --check`, inspect the staged diff, and verify
+  both the superproject and submodule status.
+- When asked to commit, use a concise subject, a blank line, and a descriptive
+  body explaining what changed and why. Use a subject-only commit only when
+  explicitly requested.
+- Do not push, create a release, or move the OSATE gitlink unless requested.
 
 ## Common Tasks
 
 **Rebuild after code changes**: Run `aadl.ls.releng.launch` or `mvn clean verify` from root
 
 **Create a test-release build**: Run `./scripts/build-test-release`
+
+**Check submodule state**: Run `git submodule status` and `git -C osate2 status --short --branch`
+
+**Update OSATE intentionally**: Check out the reviewed OSATE commit in
+`osate2/`, update the root parent version if required, run the complete
+test-release build, and stage the `osate2` gitlink
 
 **Add annex support**: Follow pattern in `ErrorModelLsSetup.java` and `ErrorModelLsRuntimeModule.java`
 
