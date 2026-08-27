@@ -41,6 +41,8 @@ The project follows Eclipse plugin architecture with Maven/Tycho build:
 - **releng/aadl.ls.releng/** - Build configuration and launch files
 - **osate2/** - Pinned `osate/osate2` Git submodule and source of the parent POM,
   target platform, bundles, and generated OSATE p2 repository
+- **Jenkinsfile** - Jenkins pipeline for the complete test-release build
+- **deploy.sh** - Main-branch p2 repository deployment script
 - **scripts/build-test-release** - Reproducible two-phase OSATE and language-server build
 
 ## Dependency on OSATE
@@ -133,6 +135,15 @@ resolves the generated OSATE p2 repository under `osate2/`. Do not delete it.
   Eclipse test infrastructure that may require a display.
 - If the user explicitly requests offline Maven validation, add `-o` to the
   applicable Maven invocations and do not silently fall back to network access.
+
+### Jenkins
+
+`Jenkinsfile` follows the OSATE CI tool names `OpenJDK21` and `M3`. It initializes
+the pinned `osate2/` submodule with `--depth 1`, runs
+`scripts/build-test-release` under Xvnc, publishes all Surefire reports, and
+archives the language-server p2 repository and build provenance. Successful
+`main` builds run `deploy.sh`; `AADL_LS_DEPLOY_DIR` overrides the target
+configured in the script.
 
 ## Running and Testing
 
@@ -260,6 +271,8 @@ Runtime bindings in `Aadl2LsRuntimeModule`:
 - **pom.xml** files - Maven/Tycho build configuration
 - **build.properties** - Defines files to include in plugin JARs
 - **.gitmodules** - Defines the public OSATE submodule URL
+- **Jenkinsfile** - Defines the Jenkins test-release pipeline
+- **deploy.sh** - Deploys the generated p2 repository and provenance from `main`
 - **scripts/build-test-release** - Defines the authoritative test-release build and checks
 - **target/build-provenance.properties** - Generated record of language-server and OSATE revisions
 

@@ -52,6 +52,17 @@ Build provenance is written to:
 target/build-provenance.properties
 ```
 
+## Jenkins
+
+The repository `Jenkinsfile` follows the OSATE pipeline conventions and expects
+Jenkins tools named `OpenJDK21` and `M3`. It initializes the pinned OSATE
+submodule with a shallow checkout, runs the complete test-release build under
+Xvnc, publishes all Surefire reports, and archives the language-server p2
+repository and build provenance. Successful `main` builds run `deploy.sh`.
+Set `AADL_LS_DEPLOY_DIR` in Jenkins to override the target configured in the
+script. Deployment replaces the target directory with the generated p2
+repository and provenance file.
+
 ## Rebuild only the language server
 
 After OSATE has been built:
