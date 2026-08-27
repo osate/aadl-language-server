@@ -45,9 +45,11 @@ if [[ -n $(git -C "${osate_dir}" status --porcelain) ]]; then
 	exit 1
 fi
 
+echo "Building OSATE"
+
 mvn \
 	-f "${osate_dir}/pom.xml" \
-	-s "${osate_dir}/releng/osate.releng/settings.xml" \
+	-s "${osate_dir}/releng/osate.releng/seisettings.xml" \
 	-Plocal \
 	-Dpr.build=false \
 	-Dtycho.localArtifacts=ignore \
@@ -56,7 +58,9 @@ mvn \
 	-Dcodecoverage=false \
 	-Djavadoc=false \
 	-DfailIfNoTests=false \
-	clean install
+	clean verify
+
+echo "Building language server"
 
 mvn \
 	-f "${repo_root}/pom.xml" \
