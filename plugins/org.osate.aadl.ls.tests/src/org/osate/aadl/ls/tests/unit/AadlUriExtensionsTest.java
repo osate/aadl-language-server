@@ -18,7 +18,7 @@
  * configuration. By using this program, You agree to comply with any and all relevant Third Party Software terms and
  * conditions contained in any such Third Party Software or separate license file distributed with such Third Party
  * Software. The parties who own the Third Party Software ("Third Party Licensors") are intended third party beneficiaries
- * to this license with respect to the terms applicable to the Third Party Software. Third Party Software licenses
+ * to this license with respect to the terms applicable to their Third Party Software. Third Party Software licenses
  * only apply to the Third Party Software and not any other portion of this program or this program as a whole.
  *******************************************************************************/
 package org.osate.aadl.ls.tests.unit;
