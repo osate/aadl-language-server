@@ -37,32 +37,52 @@ The project follows Eclipse plugin architecture with Maven/Tycho build:
 - **releng/org.osate.aadl.ls.repository/** - Eclipse p2 repository packaging
 - **releng/aadl.ls.releng/** - Build configuration and launch files
 
+## Dependency on OSATE
+
+The `osate2/` directory is a Git submodule for
+`https://github.com/osate/osate2.git`. The committed gitlink is the authoritative
+OSATE dependency. Do not make release builds follow a branch dynamically.
+
+Initialize it after cloning:
+
+```bash
+git submodule update --init osate2
+```
+
+Do not configure a Git reference repository for the submodule.
+
 ## Building
 
 **You cannot build individual modules of the language server.** The Tycho build
 resolves the whole reactor together — always build from the aggregator root, not
 from a single module directory.
 
-### Maven Build
+### Complete test-release build
+
+Build OSATE first and then build the language server:
+
+```bash
+./scripts/build-test-release
+```
+
+This is intentionally a two-phase build. The language-server Tycho reactor
+cannot resolve the OSATE p2 repository until the OSATE reactor has finished
+creating it.
+
+### Language-server-only rebuild
 
 Run the Maven launch configuration `aadl.ls.releng.launch` or execute:
 
 ```bash
-cd releng/aadl.ls.releng
-mvn clean verify -f ../.. -Dtycho.localArtifacts=ignore
+mvn clean verify -Dtycho.localArtifacts=ignore
 ```
 
 The build produces a p2 repository with all required plugin JARs in:
 `releng/org.osate.aadl.ls.repository/target/repository/plugins/`
 
-**`.mvn` marker is load-bearing.** `pom.xml` resolves the OSATE p2 repository via
-`file://${maven.multiModuleProjectDirectory}/../osate2/...`, which must point at the
-sibling `osate2` checkout. A `.mvn/` directory at the `aadl-language-server` root pins
-`maven.multiModuleProjectDirectory` to that root for every invocation style (`-f
-osate2-server/pom.xml` from the repo root, `mvn` from inside a module, etc.). Without
-it, `-f osate2-server/pom.xml` resolves the repository to the nonexistent
-`aadl-language-server/osate2` and the build fails with "No repository found at ...".
-Do not delete `aadl-language-server/.mvn/`.
+**`.mvn` marker is load-bearing.** It pins
+`${maven.multiModuleProjectDirectory}` to this repository root so `pom.xml`
+resolves the generated OSATE p2 repository under `osate2/`. Do not delete it.
 
 ### Prerequisites
 
@@ -163,9 +183,8 @@ To add a new command (e.g., for analysis):
      index. Reuse `CommandUtil` for argument parsing and URI cleanup.
    - Register the new command in `CommandService`'s constructor with `register(...)`.
 
-2. **Client Side** - Edit VSCode extension:
-   - Add command to `package.json`
-   - Implement handler in `extension.ts`
+2. **Client Side** - Update each client repository that exposes the command.
+   The client changes are released independently from this repository.
 
 **Note**: OSATE analyses may need modification to work without Eclipse workbench (e.g., use EMF `UriConverter` instead of Eclipse `IFile` for file I/O).
 
@@ -193,7 +212,7 @@ Runtime bindings in `Aadl2LsRuntimeModule`:
 
 **Rebuild after code changes**: Run `aadl.ls.releng.launch` or `mvn clean verify` from root
 
-**Test with VSCode client**: Build server, copy plugins to `vscode-client/server/aadl/lib`, package extension
+**Create a test-release build**: Run `./scripts/build-test-release`
 
 **Add annex support**: Follow pattern in `ErrorModelLsSetup.java` and `ErrorModelLsRuntimeModule.java`
 

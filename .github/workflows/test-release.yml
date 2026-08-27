@@ -1,0 +1,38 @@
+name: Test release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "test-*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out language server and OSATE
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Build OSATE and language server
+        run: xvfb-run -a ./scripts/build-test-release
+
+      - name: Upload language-server repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: aadl-language-server-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            releng/org.osate.aadl.ls.repository/target/repository/
+            target/build-provenance.properties

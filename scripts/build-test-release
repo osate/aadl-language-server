@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+osate_dir="${repo_root}/osate2"
+provenance_dir="${repo_root}/target"
+
+git -C "${repo_root}" submodule update --init osate2
+
+expected_osate_sha=$(git -C "${repo_root}" ls-tree HEAD osate2 | awk '{print $3}')
+actual_osate_sha=$(git -C "${osate_dir}" rev-parse HEAD)
+
+if [[ "${actual_osate_sha}" != "${expected_osate_sha}" ]]; then
+	echo "OSATE submodule mismatch." >&2
+	echo "Expected: ${expected_osate_sha}" >&2
+	echo "Actual:   ${actual_osate_sha}" >&2
+	exit 1
+fi
+
+if [[ -n $(git -C "${osate_dir}" status --porcelain) ]]; then
+	echo "OSATE submodule has uncommitted changes." >&2
+	exit 1
+fi
+
+mvn \
+	-f "${osate_dir}/pom.xml" \
+	-s "${osate_dir}/releng/osate.releng/settings.xml" \
+	-Plocal \
+	-Dpr.build=false \
+	-Dtycho.localArtifacts=ignore \
+	-Dsign=false \
+	-Dspotbugs=false \
+	-Dcodecoverage=false \
+	-Djavadoc=false \
+	-DfailIfNoTests=false \
+	clean install
+
+mvn \
+	-f "${repo_root}/pom.xml" \
+	-Dtycho.localArtifacts=ignore \
+	clean verify
+
+language_server_version=$(mvn -q -f "${repo_root}/pom.xml" help:evaluate \
+	-Dexpression=project.version -DforceStdout)
+osate_version=$(mvn -q -f "${osate_dir}/pom.xml" help:evaluate \
+	-Dexpression=project.version -DforceStdout)
+
+mkdir -p "${provenance_dir}"
+{
+	printf 'language.server.commit=%s\n' "$(git -C "${repo_root}" rev-parse HEAD)"
+	printf 'language.server.version=%s\n' "${language_server_version}"
+	printf 'osate.commit=%s\n' "${actual_osate_sha}"
+	printf 'osate.gitlink=%s\n' "${expected_osate_sha}"
+	printf 'osate.version=%s\n' "${osate_version}"
+	printf 'build.timestamp=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} > "${provenance_dir}/build-provenance.properties"
+
+echo "Language-server repository:"
+echo "  ${repo_root}/releng/org.osate.aadl.ls.repository/target/repository"
+echo "Build provenance:"
+echo "  ${provenance_dir}/build-provenance.properties"
