@@ -41,6 +41,29 @@ mvn \
 	-Dtycho.localArtifacts=ignore \
 	clean verify
 
+plugins_dir="${repo_root}/releng/org.osate.aadl.ls.repository/target/repository/plugins"
+duplicate_bundles=$(
+	find "${plugins_dir}" -type f -name '*.jar' |
+		sed -E 's#^.*/##; s/_[0-9].*$//' |
+		sort |
+		uniq -c |
+		awk '$1 > 1 && $2 != "org.antlr.runtime" { print }'
+)
+
+if [[ -n "${duplicate_bundles}" ]]; then
+	echo "Unexpected duplicate bundle versions in the language-server repository:" >&2
+	echo "${duplicate_bundles}" >&2
+	exit 1
+fi
+
+antlr_runtime_count=$(
+	find "${plugins_dir}" -type f -name 'org.antlr.runtime_*.jar' | wc -l | tr -d ' '
+)
+if [[ "${antlr_runtime_count}" != "2" ]]; then
+	echo "Expected exactly two org.antlr.runtime versions, found ${antlr_runtime_count}." >&2
+	exit 1
+fi
+
 language_server_version=$(mvn -q -f "${repo_root}/pom.xml" help:evaluate \
 	-Dexpression=project.version -DforceStdout)
 osate_version=$(mvn -q -f "${osate_dir}/pom.xml" help:evaluate \
