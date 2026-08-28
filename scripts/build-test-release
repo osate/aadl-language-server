@@ -48,6 +48,7 @@ fi
 echo "Building OSATE"
 
 mvn \
+	-T6 \
 	-f "${osate_dir}/pom.xml" \
 	-s "${osate_dir}/releng/osate.releng/seisettings.xml" \
 	-Plocal \
@@ -58,13 +59,12 @@ mvn \
 	-Dcodecoverage=false \
 	-Djavadoc=false \
 	-DfailIfNoTests=false \
-	clean verify
+	clean install
 
 echo "Building language server"
 
-mvn help:evaluate -Dexpression=maven.multiModuleProjectDirectory -q -DforceStdout
-
 mvn \
+	-T6 \
 	-f "${repo_root}/pom.xml" \
 	-Dtycho.localArtifacts=ignore \
 	clean verify

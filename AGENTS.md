@@ -95,8 +95,11 @@ cannot resolve the OSATE p2 repository until the OSATE reactor has finished
 creating it. The script:
 
 1. verifies that `osate2/` is clean and matches the committed gitlink;
-2. runs the complete OSATE reactor, including tests and p2/product assembly;
-3. runs the language-server reactor with `clean verify`;
+2. runs the complete OSATE reactor with `-T6 clean install`, including tests
+   and p2/product assembly; `install` is required because the separate
+   language-server reactor resolves the `org.osate:osate2-platform` target
+   definition from the same Maven local repository;
+3. runs the language-server reactor with `-T6 clean verify`;
 4. rejects unexpected duplicate bundle versions, allowing only the required
    two `org.antlr.runtime` versions; and
 5. writes `target/build-provenance.properties`.
