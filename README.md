@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This repository is deprecated and archived.**
+> Development has moved to **[osate/aadl-tooling](https://github.com/osate/aadl-tooling)**,
+> which contains this language server together with the VS Code extension and
+> `osate-cli`. Please file issues and open pull requests there.
+
 # AADL Language Server
 
 This repository contains the Java/Xtext language server for the Architecture
